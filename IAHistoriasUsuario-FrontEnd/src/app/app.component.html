@@ -1,0 +1,101 @@
+<div class="app-shell bg-theme text-ink">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-stack">
+        <div class="sidebar-logo-shell">
+          <img
+            class="sidebar-logo"
+            src="branding/userstory-studio.svg"
+            alt="UserStory Studio"
+          />
+        </div>
+        <div class="sidebar-brand-copy">
+          <p class="sidebar-brand-title">UserStory Studio</p>
+          <p class="sidebar-brand-subtitle">
+            Diseña, valida y crea Work Items con mayor claridad.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav" aria-label="Módulos principales">
+      <p class="sidebar-section-label">Módulos</p>
+      <a
+        class="sidebar-link"
+        routerLink="/disenar-work-item"
+        routerLinkActive="sidebar-link-active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        ariaCurrentWhenActive="page"
+      >
+        <span class="sidebar-link-copy">
+          <span class="sidebar-link-title">Diseñar Work Item</span>
+          <span class="sidebar-link-subtitle"
+            >Configura el Work Item y sus campos.</span
+          >
+        </span>
+      </a>
+      <a
+        class="sidebar-link"
+        routerLink="/previsualizar-work-item"
+        routerLinkActive="sidebar-link-active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        ariaCurrentWhenActive="page"
+      >
+        <span class="sidebar-link-copy">
+          <span class="sidebar-link-title">Previsualizar Work Item</span>
+          <span class="sidebar-link-subtitle"
+            >Revisa el resultado antes de crear.</span
+          >
+        </span>
+      </a>
+      <a
+        class="sidebar-link"
+        routerLink="/evaluar-hu"
+        routerLinkActive="sidebar-link-active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        ariaCurrentWhenActive="page"
+      >
+        <span class="sidebar-link-copy">
+          <span class="sidebar-link-title">Evaluar Historia</span>
+          <span class="sidebar-link-subtitle"
+            >Analiza una historia ya creada.</span
+          >
+        </span>
+      </a>
+      <a
+        class="sidebar-link"
+        routerLink="/crear-desde-texto"
+        routerLinkActive="sidebar-link-active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        ariaCurrentWhenActive="page"
+      >
+        <span class="sidebar-link-copy">
+          <span class="sidebar-link-title">Crear desde texto</span>
+          <span class="sidebar-link-subtitle"
+            >Describe la necesidad y prepara una versión editable.</span
+          >
+        </span>
+      </a>
+      <a
+        class="sidebar-link"
+        routerLink="/configuracion-azure"
+        routerLinkActive="sidebar-link-active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        ariaCurrentWhenActive="page"
+      >
+        <span class="sidebar-link-copy">
+          <span class="sidebar-link-title">Configuración Azure</span>
+          <span class="sidebar-link-subtitle"
+            >Gestiona la información de Azure DevOps.</span
+          >
+        </span>
+      </a>
+    </nav>
+  </aside>
+
+  <main class="content-area">
+    <router-outlet></router-outlet>
+  </main>
+</div>
+<app-confirm-dialog></app-confirm-dialog>
+<app-toast-container></app-toast-container>

@@ -1,0 +1,923 @@
+<div class="page-shell">
+  <app-page-header
+    title="Previsualizar WorkItem"
+    subtitle="Genera, revisa y valida la historia antes de crearla en Azure DevOps."
+  >
+  </app-page-header>
+
+  <div class="content-wrap preview-flow">
+    @if (!hasRuntimeCredential) {
+      <div class="azure-connection-guidance" role="status">
+        <span
+          >Ingresa tu Azure PAT para usar acciones conectadas. La vista previa y
+          el historial permanecen disponibles.</span
+        >
+        <a class="btn-secondary" routerLink="/configuracion-azure"
+          >Ir a Configuración Azure</a
+        >
+      </div>
+    }
+    @if (!hasWorkspaceData && historyItems.length === 0) {
+      <app-section-card
+        class="preview-step-card preview-empty-card"
+        title="Aún no hay un Work Item para previsualizar"
+        description="Diseña un Work Item o créalo desde texto para revisar su contenido antes de enviarlo a Azure DevOps."
+      >
+        <app-feedback-message
+          message="Comienza desde uno de los flujos de creación y aquí encontrarás una versión editable."
+        >
+        </app-feedback-message>
+
+        <div class="preview-empty-actions">
+          <a class="btn-primary" routerLink="/disenar-work-item"
+            >Diseñar Work Item</a
+          >
+          <a class="btn-secondary" routerLink="/crear-desde-texto"
+            >Crear desde texto</a
+          >
+        </div>
+      </app-section-card>
+    }
+
+    @if (hasWorkspaceData && !parsed && !createResult) {
+      <app-section-card
+        class="preview-step-card"
+        title="Preparar vista previa"
+        description="La información del flujo anterior está lista para organizarse en una versión editable."
+        [attr.aria-busy]="isLoading"
+      >
+        <div class="preview-action-layout">
+          <div class="action-bar preview-main-actions">
+            <button
+              type="button"
+              class="btn-primary"
+              (click)="callBackendGenerate()"
+              [disabled]="isLoading || !promptInput.trim()"
+              [attr.aria-busy]="isLoading"
+            >
+              @if (isLoading) {
+                <app-loading-spinner size="small"></app-loading-spinner>
+              }
+              {{
+                isLoading
+                  ? "Generando vista previa…"
+                  : "Reintentar generación"
+              }}
+            </button>
+            <button
+              type="button"
+              class="btn-secondary"
+              (click)="navigateBack()"
+              [disabled]="isLoading"
+            >
+              Volver y revisar la información
+            </button>
+          </div>
+        </div>
+
+        @if (!promptInput.trim()) {
+          <app-feedback-message
+            message="No fue posible recuperar la información necesaria. Vuelve al flujo anterior para revisarla."
+          >
+          </app-feedback-message>
+        }
+        <app-feedback-message
+          [message]="status"
+          [tone]="previewStatusTone"
+        ></app-feedback-message>
+        @if (error) {
+          <app-feedback-message
+            [message]="error"
+            tone="error"
+          ></app-feedback-message>
+        }
+      </app-section-card>
+    }
+
+    <!-- Preview parsed Work Item -->
+    @if (parsed) {
+      <div
+        #previewWorkItemStart
+        id="preview-work-item-start"
+        class="preview-work-item-start"
+        role="region"
+        tabindex="-1"
+        [attr.aria-label]="
+          'Work Item restaurado: ' + (parsed.workItem.title || 'sin título')
+        "
+      >
+        @if (historyRestoreBanner; as restoreBanner) {
+          <div
+            class="preview-restore-banner"
+            [class.preview-restore-banner-info]="restoreBanner.tone === 'info'"
+            [class.preview-restore-banner-success]="
+              restoreBanner.tone === 'success'
+            "
+            [class.preview-restore-banner-warning]="
+              restoreBanner.tone === 'warning'
+            "
+            role="status"
+            aria-live="polite"
+            [attr.aria-busy]="restoreBanner.showSpinner ? 'true' : null"
+          >
+            @if (restoreBanner.showSpinner) {
+              <span class="preview-restore-spinner" aria-hidden="true"></span>
+            }
+            <div class="preview-restore-banner-content">
+              <strong>{{ restoreBanner.title }}</strong>
+              <p>{{ restoreBanner.message }}</p>
+              @if (restoreBanner.detail) {
+                <p class="preview-restore-banner-detail">
+                  {{ restoreBanner.detail }}
+                </p>
+              }
+            </div>
+            @if (restoreBanner.canRetryMetadata) {
+              <button
+                type="button"
+                class="btn-secondary"
+                (click)="retryHistoryRestoreMetadata()"
+              >
+                Reintentar metadata
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      @if (refinementCandidate) {
+        <app-section-card
+          class="preview-step-card preview-refinement-proposal"
+          eyebrow="Propuesta pendiente"
+          title="Revisión del refinamiento"
+        >
+          <div class="preview-refinement-banner" role="status">
+            <div>
+              <p class="preview-refinement-banner-title">
+                Estás revisando una propuesta de refinamiento. La versión actual
+                no se reemplazará hasta que la aceptes.
+              </p>
+              @if (
+                refinementCandidate.scope === "content" &&
+                refinementCandidate.changedFields.length > 0
+              ) {
+                <div
+                  class="preview-refinement-badges"
+                  aria-label="Campos modificados"
+                >
+                  @for (
+                    field of refinementCandidate.changedFields;
+                    track field
+                  ) {
+                    <span class="preview-refinement-badge">{{
+                      refinementFieldChangeMessage(field)
+                    }}</span>
+                  }
+                </div>
+              } @else if (refinementCandidate.scope === "content") {
+                <p class="preview-refinement-no-changes">
+                  La propuesta no contiene diferencias visibles.
+                </p>
+              } @else {
+                <div
+                  class="preview-refinement-badges"
+                  aria-label="Test Cases modificados"
+                >
+                  <span class="preview-refinement-badge">
+                    {{ refinementCandidate.proposals.length }}
+                    {{
+                      refinementCandidate.proposals.length === 1
+                        ? "Test Case propuesto"
+                        : "Test Cases propuestos"
+                    }}
+                  </span>
+                  <span class="preview-refinement-badge"
+                    >El estado y la posición no cambiarán</span
+                  >
+                </div>
+              }
+            </div>
+            <div class="action-bar preview-refinement-actions">
+              @if (refinementCandidate.scope === "testCases") {
+                <button
+                  type="button"
+                  class="btn-secondary"
+                  (click)="toggleTestCaseComparison()"
+                  [attr.aria-pressed]="showCurrentTestCaseComparison"
+                >
+                  {{
+                    showCurrentTestCaseComparison
+                      ? "Ver propuesta"
+                      : "Ver versión actual"
+                  }}
+                </button>
+              }
+              <button
+                type="button"
+                class="btn-muted"
+                (click)="discardRefinement()"
+              >
+                Descartar propuesta
+              </button>
+              <button
+                type="button"
+                class="btn-primary"
+                (click)="acceptRefinement()"
+              >
+                Aceptar refinamiento
+              </button>
+            </div>
+          </div>
+        </app-section-card>
+      }
+
+      <app-section-card
+        class="preview-step-card"
+        title="Resumen de la historia"
+        description="Verifica los datos principales y el contexto de Azure DevOps antes de revisar el contenido funcional."
+      >
+        <div class="preview-summary-grid">
+          <article class="summary-card preview-summary-title">
+            <label class="summary-label" for="preview-work-item-title">
+              Título
+            </label>
+            <input
+              id="preview-work-item-title"
+              class="field-input preview-title-input"
+              [formControl]="contentForm.controls.title"
+              required
+              aria-required="true"
+              [attr.aria-invalid]="isContentFieldInvalid('title')"
+              [attr.aria-describedby]="
+                isContentFieldInvalid('title')
+                  ? 'preview-work-item-title-error'
+                  : null
+              "
+              [class.preview-field-error]="isContentFieldInvalid('title')"
+            />
+            @if (isContentFieldInvalid("title")) {
+              <p id="preview-work-item-title-error" class="field-error-message">
+                El título es obligatorio y no puede contener solo espacios.
+              </p>
+            }
+            @if (refinementFieldChanged("title")) {
+              <span class="preview-refinement-badge">Título modificado.</span>
+            }
+          </article>
+
+          <article class="summary-card">
+            <p class="summary-label">Tipo</p>
+            <p class="summary-value summary-value-compact">
+              {{ parsed.workItemType || "User Story" }}
+            </p>
+          </article>
+
+          <article class="summary-card">
+            <p class="summary-label">Asignado</p>
+            <p class="summary-value summary-value-compact">
+              {{ parsed.workItem.assignedTo || "(sin asignar)" }}
+            </p>
+          </article>
+
+          <article class="summary-card">
+            <p class="summary-label">Proyecto</p>
+            <p class="summary-value summary-value-compact">
+              {{ parsed.azdoProject || "(sin proyecto)" }}
+            </p>
+          </article>
+
+          <article class="summary-card">
+            <p class="summary-label">Iteración</p>
+            <p class="summary-value summary-value-compact">
+              {{ parsed.iterationPath || "(sin iteración)" }}
+            </p>
+          </article>
+
+          <article class="summary-card">
+            <p class="summary-label">Área</p>
+            <p class="summary-value summary-value-compact">
+              {{ parsed.areaPath || "(sin área)" }}
+            </p>
+          </article>
+        </div>
+      </app-section-card>
+
+      <app-section-card
+        class="preview-step-card"
+        title="Contenido del Work Item"
+        description="Edita el contenido que se enviará a Azure DevOps. Los ajustes manuales permanecen en esta vista y no crean una versión de historial."
+      >
+        <article
+          class="content-card preview-content-card"
+          [class.preview-content-card--single-column]="!shouldDisplayAcceptanceCriteria"
+        >
+          <div class="preview-html-card">
+            <app-rich-text-editor
+              inputId="preview-work-item-description"
+              label="Descripción"
+              placeholder="Describe el objetivo, contexto, alcance y valor que debe entregar este Work Item."
+              minHeight="13.75rem"
+              layoutMode="auto-grow"
+              [showRequiredIndicator]="false"
+              [required]="isContentFieldRequired('description')"
+              [invalid]="isContentFieldInvalid('description')"
+              errorMessage="La descripción es obligatoria."
+              [formControl]="contentForm.controls.description"
+            >
+            </app-rich-text-editor>
+            @if (refinementFieldChanged("description")) {
+              <span class="preview-refinement-badge"
+                >Descripción modificada.</span
+              >
+            }
+          </div>
+
+          @if (shouldDisplayAcceptanceCriteria) {
+            <div class="preview-html-card">
+              <app-rich-text-editor
+                inputId="preview-work-item-acceptance-criteria"
+                label="Criterios de aceptación"
+                placeholder="Agrega condiciones claras y verificables. Puedes usar una lista para separar cada criterio."
+                minHeight="12.5rem"
+                layoutMode="auto-grow"
+                [showRequiredIndicator]="false"
+                [required]="isAcceptanceCriteriaRequired"
+                [invalid]="isContentFieldInvalid('acceptanceCriteria')"
+                errorMessage="Los criterios de aceptación son obligatorios."
+                [formControl]="contentForm.controls.acceptanceCriteria"
+              >
+              </app-rich-text-editor>
+              @if (refinementFieldChanged("acceptanceCriteria")) {
+                <span class="preview-refinement-badge"
+                  >Criterios de aceptación modificados.</span
+                >
+              }
+              @if (hasUnsupportedAcceptanceCriteriaContent) {
+                <div class="preview-content-warning" role="status">
+                  <strong>Criterios no disponibles para este tipo</strong>
+                  <p>
+                    Azure DevOps no incluye el campo Criterios de aceptación
+                    para este tipo de Work Item. El contenido permanecerá
+                    visible en esta previsualización, pero no formará parte de
+                    la creación.
+                  </p>
+                </div>
+              }
+            </div>
+          }
+        </article>
+      </app-section-card>
+
+      @if (supportsTestCases) {
+        <app-section-card
+          class="preview-step-card"
+          [title]="'Test Cases (' + parsed.testCases.length + ')'"
+          description="Comprueba acciones, resultados esperados y estados. Puedes eliminar un caso antes de crear el Work Item."
+        >
+          @if (parsed.testCases.length > 0) {
+            <div class="preview-test-case-grid">
+              @for (tc of parsed.testCases; track $index; let i = $index) {
+                @if (testCaseProposalAt(i); as proposal) {
+                  @if (showCurrentTestCaseComparison) {
+                    <app-test-case-editor
+                      [testCase]="tc"
+                      [position]="i"
+                      [allowedStates]="testCaseStateOptions"
+                      [disabled]="isCreating || !!refinementCandidate"
+                      [showValidation]="showTestCaseValidation"
+                      [showRequiredIndicators]="false"
+                      (changed)="updateTestCase(i, $event)"
+                      (deleteRequested)="requestDeleteTestCase(i)"
+                    >
+                    </app-test-case-editor>
+                  } @else {
+                    <article
+                      class="preview-test-case-proposal"
+                      aria-label="Propuesta para Test Case {{ i + 1 }}"
+                    >
+                      <header>
+                        <div>
+                          <span class="preview-refinement-badge"
+                            >Propuesta · TC {{ i + 1 }}</span
+                          >
+                          <h3>{{ proposal.title }}</h3>
+                        </div>
+                        <span class="work-item-state-badge">{{
+                          tc.state
+                        }}</span>
+                      </header>
+                      <p class="preview-test-case-state-note">
+                        El estado se conservará sin cambios.
+                      </p>
+                      <ol>
+                        @for (
+                          step of proposal.steps;
+                          track $index;
+                          let stepIndex = $index
+                        ) {
+                          <li>
+                            <strong>Paso {{ stepIndex + 1 }}</strong>
+                            <div>
+                              <span>Acción</span>
+                              <p>{{ step.action }}</p>
+                            </div>
+                            <div>
+                              <span>Resultado esperado</span>
+                              <p>{{ step.expected }}</p>
+                            </div>
+                          </li>
+                        }
+                      </ol>
+                    </article>
+                  }
+                } @else {
+                  <app-test-case-editor
+                    [testCase]="tc"
+                    [position]="i"
+                    [allowedStates]="testCaseStateOptions"
+                    [disabled]="isCreating || !!refinementCandidate"
+                    [showValidation]="showTestCaseValidation"
+                    [showRequiredIndicators]="false"
+                    (changed)="updateTestCase(i, $event)"
+                    (deleteRequested)="requestDeleteTestCase(i)"
+                  >
+                  </app-test-case-editor>
+                }
+              }
+            </div>
+            <div class="preview-add-test-case-action">
+              <button
+                type="button"
+                class="btn-secondary preview-add-test-case-button"
+                (click)="addTestCase()"
+                [disabled]="
+                  contentEditingDisabled ||
+                  isAddingTestCase ||
+                  isHistoryMetadataBlockingActions
+                "
+                [attr.title]="
+                  isHistoryMetadataBlockingActions
+                    ? 'Los estados de Test Case todavía se están cargando.'
+                    : null
+                "
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"
+                  ></path>
+                  <path d="M14 3v5h5"></path>
+                  <path d="M12 12v6"></path>
+                  <path d="M9 15h6"></path>
+                </svg>
+                {{
+                  isAddingTestCase
+                    ? "Cargando metadata..."
+                    : "Agregar Test Case"
+                }}
+              </button>
+            </div>
+          } @else {
+            <div class="preview-empty-test-cases">
+              <p>
+                Este Work Item aún no tiene Test Cases. Puedes agregar uno
+                manualmente.
+              </p>
+              <button
+                type="button"
+                class="btn-primary preview-add-test-case-button"
+                (click)="addTestCase()"
+                [disabled]="
+                  contentEditingDisabled ||
+                  isAddingTestCase ||
+                  isHistoryMetadataBlockingActions
+                "
+                [attr.title]="
+                  isHistoryMetadataBlockingActions
+                    ? 'Los estados de Test Case todavía se están cargando.'
+                    : null
+                "
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"
+                  ></path>
+                  <path d="M14 3v5h5"></path>
+                  <path d="M12 12v6"></path>
+                  <path d="M9 15h6"></path>
+                </svg>
+                {{
+                  isAddingTestCase
+                    ? "Cargando metadata..."
+                    : "Agregar primer Test Case"
+                }}
+              </button>
+            </div>
+          }
+          @if (isHistoryMetadataBlockingActions) {
+            <p class="preview-metadata-action-reason">
+              Los estados de Test Case todavía se están cargando.
+            </p>
+          }
+        </app-section-card>
+      }
+
+      @if (!createResult) {
+        <section
+          class="preview-sticky-actions"
+          aria-label="Acciones del Work Item"
+        >
+          <div class="preview-sticky-status" aria-live="polite">
+            @if (previewHasManualChanges) {
+              <strong class="preview-local-changes-badge"
+                >Con cambios locales</strong
+              >
+              <span
+                >Esta vista contiene ajustes manuales que no se guardarán como
+                una nueva versión del historial.</span
+              >
+            } @else if (isTemporaryPreview) {
+              <strong>Vista temporal</strong>
+              <span
+                >Esta vista todavía no corresponde a una versión
+                almacenada.</span
+              >
+            } @else {
+              <strong>Visualizando ahora</strong>
+              <span
+                >La vista coincide con la versión seleccionada del
+                historial.</span
+              >
+            }
+            @if (metadataDependentActionReason) {
+              <span id="metadata-dependent-action-reason">{{
+                metadataDependentActionReason
+              }}</span>
+            }
+          </div>
+          <div class="preview-sticky-buttons">
+            <button
+              type="button"
+              class="btn-secondary preview-refinement-trigger"
+              (click)="openRefinementDialog()"
+              [disabled]="!canOpenRefinement"
+              [attr.title]="refinementDisabledReason || null"
+              [attr.aria-describedby]="
+                refinementDisabledReason ? 'refinement-disabled-reason' : null
+              "
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path
+                  d="M12 3l1.1 3.2L16 7.5l-2.9 1.3L12 12l-1.1-3.2L8 7.5l2.9-1.3L12 3Z"
+                ></path>
+                <path
+                  d="M18.5 13l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2Z"
+                ></path>
+              </svg>
+              Refinar Work Item
+            </button>
+            <button
+              type="button"
+              class="btn-primary"
+              (click)="createInAzureDevOps()"
+              [disabled]="
+                isCreating ||
+                !!refinementCandidate ||
+                isHistoryMetadataBlockingActions
+              "
+              [attr.title]="metadataDependentActionReason || null"
+              [attr.aria-describedby]="
+                metadataDependentActionReason
+                  ? 'metadata-dependent-action-reason'
+                  : null
+              "
+            >
+              {{
+                isCreating
+                  ? "Creando en Azure DevOps..."
+                  : "Crear en Azure DevOps"
+              }}
+            </button>
+            <button
+              type="button"
+              class="btn-muted"
+              (click)="goBackAndReset()"
+              [disabled]="isCreating || !!refinementCandidate"
+            >
+              Volver
+            </button>
+          </div>
+        </section>
+        @if (refinementDisabledReason) {
+          <p
+            id="refinement-disabled-reason"
+            class="preview-refinement-disabled-reason"
+          >
+            {{ refinementDisabledReason }}
+          </p>
+        }
+        <app-feedback-message
+          [message]="status"
+          [tone]="previewStatusTone"
+        ></app-feedback-message>
+        <app-feedback-message
+          [message]="error"
+          tone="error"
+        ></app-feedback-message>
+      }
+    }
+
+    <!-- Create result -->
+    @if (createResult) {
+      <app-section-card
+        class="preview-step-card preview-created-card"
+        eyebrow="Completado"
+        title="Creado en Azure DevOps"
+        description="La creación finalizó. Puedes abrir los elementos creados o iniciar una nueva historia."
+      >
+        <app-feedback-message
+          [message]="status || createResult.message"
+          tone="success"
+        ></app-feedback-message>
+
+        <div class="preview-created-summary">
+          <article class="summary-card">
+            <p class="summary-label">Work Item</p>
+            <p class="summary-value">
+              Work Item #{{ createResult.huId || "creado" }}
+            </p>
+            @if (createResult.huUrl) {
+              <a
+                [href]="createResult.huUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="preview-result-link"
+              >
+                Abrir en Azure DevOps
+              </a>
+            }
+          </article>
+          @if (createResult.suite) {
+            <article class="summary-card">
+              <p class="summary-label">Suite</p>
+              <p class="summary-value">{{ createResult.suite.finalName }}</p>
+            </article>
+          }
+        </div>
+
+        @if ((createResult.createdTestCases?.length ?? 0) > 0) {
+          <section
+            class="preview-operation-results"
+            aria-labelledby="created-test-cases-title"
+          >
+            <h4 id="created-test-cases-title">Test Cases creados</h4>
+            <ul>
+              @for (
+                testCase of createResult.createdTestCases;
+                track testCase.id
+              ) {
+                <li>
+                  <a
+                    [href]="testCase.url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >#{{ testCase.id }} {{ testCase.title }}</a
+                  >
+                </li>
+              }
+            </ul>
+          </section>
+        }
+        @if ((createResult.failedTestCases?.length ?? 0) > 0) {
+          <section
+            class="preview-operation-results preview-operation-failures"
+            aria-labelledby="failed-test-cases-title"
+          >
+            <h4 id="failed-test-cases-title">Fases que requieren atención</h4>
+            <ul>
+              @for (failure of createResult.failedTestCases; track $index) {
+                <li>
+                  <strong>{{ failure.phase }}</strong> · {{ failure.title }}:
+                  {{ failureDisplayMessage(failure) }}
+                </li>
+              }
+            </ul>
+          </section>
+        }
+
+        <div class="action-bar">
+          <button type="button" class="btn-primary" (click)="goBackAndReset()">
+            Crear otro Work Item
+          </button>
+        </div>
+      </app-section-card>
+    }
+    <app-section-card
+      class="preview-step-card preview-history-section"
+      title="Versiones generadas en esta sesión"
+      description="Se conservan las generaciones de IA y los refinamientos que hayas aceptado. Los cambios manuales no crean una nueva versión."
+    >
+      @if (historyItems.length > 0) {
+        <div class="preview-history-heading">
+          <p class="preview-history-count">
+            {{ historyItems.length }}
+            {{
+              historyItems.length === 1
+                ? "versión disponible"
+                : "versiones disponibles"
+            }}
+          </p>
+          <button
+            type="button"
+            class="btn-muted preview-history-clear"
+            (click)="clearHistory()"
+            [disabled]="
+              isCreating || !!refinementCandidate || isHistoryRestoreInProgress
+            "
+          >
+            Limpiar historial
+          </button>
+        </div>
+
+        <div class="preview-history-grid">
+          @for (item of historyItems; track item.id) {
+            <article
+              class="preview-history-card"
+              [class.preview-history-card-active]="isViewingHistoryItem(item)"
+              [class.preview-history-card-base]="isHistoryBaseItem(item)"
+              [attr.aria-current]="isViewingHistoryItem(item) ? 'true' : null"
+            >
+              <div class="preview-history-card-heading">
+                <div class="preview-history-title">
+                  <div class="preview-history-version-badges">
+                    <span class="work-item-state-badge">{{
+                      historyVersionLabel(item)
+                    }}</span>
+                    @if (item.refinementScope === "content") {
+                      <span class="preview-history-scope-badge">Contenido</span>
+                    }
+                    @if (item.refinementScope === "testCases") {
+                      <span class="preview-history-scope-badge"
+                        >Test Cases</span
+                      >
+                    }
+                    @if (isViewingHistoryItem(item)) {
+                      <span class="preview-history-active-badge"
+                        >Visualizando ahora</span
+                      >
+                    } @else if (isHistoryBaseItem(item)) {
+                      <span class="preview-history-base-badge"
+                        >Base de la vista</span
+                      >
+                    }
+                  </div>
+                  <h3>{{ item.title }}</h3>
+                </div>
+                <time [attr.datetime]="item.createdAt">
+                  {{ item.createdAt | date: "dd/MM/yyyy, h:mm a" }}
+                </time>
+              </div>
+
+              <dl class="preview-history-meta">
+                <div>
+                  <dt>Proyecto</dt>
+                  <dd>{{ item.project || "(sin proyecto)" }}</dd>
+                </div>
+                <div>
+                  <dt>Tipo</dt>
+                  <dd>{{ item.workItemType }}</dd>
+                </div>
+                <div>
+                  <dt>Test cases</dt>
+                  <dd>{{ item.testCasesCount }}</dd>
+                </div>
+                <div>
+                  <dt>Origen</dt>
+                  <dd>{{ historySourceLabel(item.source) }}</dd>
+                </div>
+              </dl>
+
+              @if (isHistoryBaseItem(item)) {
+                <p class="preview-history-local-copy">
+                  Tienes cambios locales sobre esta versión.
+                </p>
+              }
+
+              <div class="action-bar preview-history-actions">
+                <button
+                  type="button"
+                  class="btn-secondary"
+                  (click)="restoreHistoryItem(item)"
+                  [disabled]="
+                    isViewingHistoryItem(item) ||
+                    isCreating ||
+                    !!refinementCandidate ||
+                    isHistoryRestoreInProgress
+                  "
+                  [attr.aria-busy]="
+                    isRestoringHistoryEntry(item.id) ? 'true' : null
+                  "
+                >
+                  @if (isRestoringHistoryEntry(item.id)) {
+                    <span
+                      class="preview-restore-button-spinner"
+                      aria-hidden="true"
+                    ></span>
+                    Abriendo versión…
+                  } @else if (isViewingHistoryItem(item)) {
+                    Vista actual
+                  } @else {
+                    Ver versión
+                  }
+                </button>
+                <button
+                  type="button"
+                  class="preview-delete-button"
+                  (click)="removeHistoryItem(item.id)"
+                  [disabled]="
+                    isCreating ||
+                    !!refinementCandidate ||
+                    isHistoryRestoreInProgress
+                  "
+                  [attr.aria-label]="
+                    'Eliminar ' + item.title + ' del historial'
+                  "
+                >
+                  Eliminar
+                </button>
+              </div>
+              @if (isHistoryRestoreError(item.id)) {
+                <div
+                  [id]="'history-restore-error-' + item.id"
+                  class="preview-history-restore-error"
+                  role="alert"
+                  tabindex="-1"
+                >
+                  <strong>No fue posible restaurar esta versión</strong>
+                  <p>{{ historyRestoreState.message }}</p>
+                </div>
+              }
+            </article>
+          }
+        </div>
+      } @else {
+        <app-feedback-message
+          message="Todavía no hay versiones generadas por IA en esta sesión."
+        >
+        </app-feedback-message>
+      }
+    </app-section-card>
+  </div>
+
+  @if (showRefinementModal) {
+    <app-work-item-refinement-dialog
+      [availableFields]="refinementFields"
+      [testCases]="parsed?.testCases ?? []"
+      [preparing]="isPreparingRefinement"
+      [preparationError]="refinementPreparationError"
+      [fallbackAvailable]="refinementFields.length > 0"
+      [usingFallback]="refinementUsingFallback"
+      [loading]="isRefining"
+      [error]="refinementError"
+      (cancelled)="closeRefinementModal()"
+      (retryRequested)="retryRefinementMetadata()"
+      (fallbackRequested)="continueRefinementWithFallback()"
+      (submitted)="generateRefinement($event)"
+    >
+    </app-work-item-refinement-dialog>
+  }
+
+  @if (creationDialogState; as creationState) {
+    <app-work-item-creation-dialog
+      [state]="creationState"
+      (closed)="closeCreationDialog()"
+      (retryRequested)="retryCreationPreflight()"
+      (confirmed)="confirmPreparedCreation()"
+      (resultRequested)="viewCreationResult()"
+    >
+    </app-work-item-creation-dialog>
+  }
+</div>

@@ -1,0 +1,23 @@
+# Herramientas de trabajo locales (no forman parte del producto)
+/.agents/
+/.codex/
+/.serena/
+/.vscode/
+
+# Credenciales y configuracion local
+**/local.settings.json
+**/.env
+**/.env.*
+**/*.pfx
+**/*.publishsettings
+
+# Artefactos generados
+**/node_modules/
+**/bin/
+**/obj/
+**/dist/
+**/.angular/
+**/coverage/
+**/test-results/
+**/.vs/
+**/*.log

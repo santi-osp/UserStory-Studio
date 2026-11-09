@@ -1,0 +1,94 @@
+<fieldset
+  class="contents"
+  [disabled]="loading"
+  aria-describedby="destination-help"
+>
+  <legend class="sr-only">Destino en Azure DevOps</legend>
+  <p id="destination-help" class="sr-only">
+    Selecciona proyecto, tipo, área e iteración del Work Item.
+  </p>
+
+  <div class="grid gap-6 md:grid-cols-2">
+    <div class="field-label">
+      <label [for]="projectId"
+        >Proyecto Azure DevOps
+        @if (projectRequired) {
+          <app-required-field-marker></app-required-field-marker>
+        }
+      </label>
+      <app-searchable-select
+        [formControl]="controls.project"
+        [inputId]="projectId"
+        [options]="projectOptions"
+        [loading]="loading"
+        [required]="projectRequired"
+        [invalid]="!!projectError"
+        [describedBy]="projectError ? projectId + '-error' : ''"
+        placeholder="Busca y selecciona el proyecto"
+        emptyText="Sin proyectos que coincidan."
+        [allowManualEntry]="true"
+        hint="El proyecto determina las áreas, iteraciones, campos y Test Plans disponibles."
+      >
+      </app-searchable-select>
+      <app-field-validation-message
+        [message]="projectError"
+        [messageId]="projectId + '-error'"
+      ></app-field-validation-message>
+    </div>
+    <ng-content select="[work-item-type]"></ng-content>
+
+    <div class="field-label">
+      <label [for]="areaId"
+        >Área del proyecto
+        @if (areaRequired) {
+          <app-required-field-marker></app-required-field-marker>
+        }
+      </label>
+      <app-searchable-select
+        [formControl]="controls.areaPath"
+        [inputId]="areaId"
+        [options]="areaPathOptions"
+        [loading]="loading"
+        [required]="areaRequired"
+        [invalid]="!!areaError"
+        [describedBy]="areaError ? areaId + '-error' : ''"
+        placeholder="Selecciona o escribe el área"
+        emptyText="No hay áreas que coincidan."
+        [allowManualEntry]="true"
+        hint="Define el equipo, producto o frente del Work Item."
+      >
+      </app-searchable-select>
+      <app-field-validation-message
+        [message]="areaError"
+        [messageId]="areaId + '-error'"
+      ></app-field-validation-message>
+    </div>
+
+    <div class="field-label">
+      <label [for]="iterationId"
+        >Iteración / Sprint
+        @if (iterationRequired) {
+          <app-required-field-marker></app-required-field-marker>
+        }
+      </label>
+      <app-searchable-select
+        [formControl]="controls.iterationPath"
+        [inputId]="iterationId"
+        [options]="iterationPathOptions"
+        [loading]="loading"
+        [required]="iterationRequired"
+        [invalid]="!!iterationError"
+        [describedBy]="iterationError ? iterationId + '-error' : ''"
+        placeholder="Selecciona o escribe la iteración"
+        emptyText="No hay iteraciones que coincidan."
+        [allowManualEntry]="true"
+        hint="Define la ruta de iteración del Work Item."
+      >
+      </app-searchable-select>
+      <app-field-validation-message
+        [message]="iterationError"
+        [messageId]="iterationId + '-error'"
+      ></app-field-validation-message>
+    </div>
+  </div>
+</fieldset>

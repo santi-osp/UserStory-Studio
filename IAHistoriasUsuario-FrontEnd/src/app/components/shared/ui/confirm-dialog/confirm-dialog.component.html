@@ -1,0 +1,60 @@
+@if (dialogService.dialog$ | async; as dialog) {
+  <div class="confirm-dialog-backdrop" (mousedown)="cancelFromBackdrop($event)">
+    <section
+      #dialog
+      class="confirm-dialog"
+      [class.confirm-dialog-danger]="dialog.type === 'danger'"
+      [class.confirm-dialog-info]="dialog.type === 'info'"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirm-dialog-title"
+      aria-describedby="confirm-dialog-description"
+      tabindex="-1"
+    >
+      <div class="confirm-dialog-heading">
+        <span class="confirm-dialog-indicator" aria-hidden="true"></span>
+        <div>
+          <p class="confirm-dialog-eyebrow">Confirmación requerida</p>
+          <h2 id="confirm-dialog-title">{{ dialog.title }}</h2>
+        </div>
+      </div>
+
+      <div id="confirm-dialog-description" class="confirm-dialog-content">
+        <p>{{ dialog.message }}</p>
+
+        @if (dialog.detail) {
+          <p class="confirm-dialog-detail">{{ dialog.detail }}</p>
+        }
+
+        @if (dialog.details.length > 0) {
+          <dl class="confirm-dialog-details">
+            @for (item of dialog.details; track item.label) {
+              <div>
+                <dt>{{ item.label }}</dt>
+                <dd>{{ item.value }}</dd>
+              </div>
+            }
+          </dl>
+        }
+      </div>
+
+      <div class="confirm-dialog-actions">
+        <button
+          #initialFocus
+          type="button"
+          class="btn-muted"
+          (click)="dialogService.cancel()"
+        >
+          {{ dialog.cancelLabel }}
+        </button>
+        <button
+          type="button"
+          [class]="dialog.type === 'danger' ? 'btn-danger' : 'btn-primary'"
+          (click)="dialogService.accept()"
+        >
+          {{ dialog.confirmLabel }}
+        </button>
+      </div>
+    </section>
+  </div>
+}

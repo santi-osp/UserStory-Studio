@@ -1,0 +1,57 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appName": {
+      "type": "string",
+      "minLength": 2,
+      "metadata": {
+        "description": "Nombre de la Azure Function App existente que se va a configurar."
+      }
+    },
+    "frontendOrigin": {
+      "type": "string",
+      "minLength": 8,
+      "metadata": {
+        "description": "Origen HTTPS exacto del frontend, sin slash final."
+      }
+    },
+    "additionalAllowedOrigins": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "Orígenes HTTPS adicionales permitidos por CORS. No usar wildcard."
+      }
+    }
+  },
+  "variables": {
+    "allowedOrigins": "[union(createArray(parameters('frontendOrigin')), parameters('additionalAllowedOrigins'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/sites/config",
+      "apiVersion": "2022-09-01",
+      "name": "[format('{0}/web', parameters('appName'))]",
+      "properties": {
+        "cors": {
+          "allowedOrigins": "[variables('allowedOrigins')]",
+          "supportCredentials": false
+        },
+        "ftpsState": "Disabled",
+        "minTlsVersion": "1.2",
+        "scmMinTlsVersion": "1.2",
+        "remoteDebuggingEnabled": false
+      }
+    }
+  ],
+  "outputs": {
+    "functionAppName": {
+      "type": "string",
+      "value": "[parameters('appName')]"
+    },
+    "configuredAllowedOrigins": {
+      "type": "array",
+      "value": "[variables('allowedOrigins')]"
+    }
+  }
+}

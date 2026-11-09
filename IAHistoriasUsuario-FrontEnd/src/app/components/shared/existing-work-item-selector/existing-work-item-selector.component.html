@@ -1,0 +1,187 @@
+<section
+  class="existing-work-item-selector"
+  [formGroup]="form"
+  [attr.aria-busy]="isSearching || isLoadingMetadata"
+>
+  <div class="evaluation-context-grid">
+    <div class="field-label">
+      <label for="existing-work-item-project">
+        Proyecto Azure DevOps
+        @if (projectRequired) {
+          <app-required-field-marker></app-required-field-marker>
+        }
+      </label>
+      <app-searchable-select
+        formControlName="project"
+        inputId="existing-work-item-project"
+        [options]="projectSelectOptions"
+        [required]="projectRequired"
+        placeholder="Busca y selecciona el proyecto"
+        emptyText="Sin proyectos que coincidan."
+        [allowManualEntry]="true"
+        hint="El proyecto es obligatorio para buscar Work Items."
+      ></app-searchable-select>
+    </div>
+
+    <div class="field-label">
+      <label for="existing-work-item-area">Área</label>
+      <app-searchable-select
+        formControlName="areaPath"
+        inputId="existing-work-item-area"
+        [options]="areaSelectOptions"
+        placeholder="Todas las áreas"
+        emptyText="Sin áreas que coincidan."
+        [allowManualEntry]="true"
+        clearLabel="Todas las áreas"
+        hint="Opcional: limita la búsqueda por área."
+      ></app-searchable-select>
+    </div>
+
+    <div class="field-label">
+      <label for="existing-work-item-iteration">Iteración</label>
+      <app-searchable-select
+        formControlName="iterationPath"
+        inputId="existing-work-item-iteration"
+        [options]="iterationSelectOptions"
+        placeholder="Todas las iteraciones"
+        emptyText="Sin iteraciones que coincidan."
+        [allowManualEntry]="true"
+        clearLabel="Todas las iteraciones"
+        hint="Opcional: limita la búsqueda por sprint o iteración."
+      ></app-searchable-select>
+    </div>
+  </div>
+
+  <div class="evaluation-secondary-actions">
+    <p class="evaluation-action-help">
+      Actualiza el catálogo si un proyecto cambió recientemente en Azure DevOps.
+    </p>
+    <button
+      type="button"
+      class="btn-secondary"
+      [disabled]="!canRefreshMetadata"
+      [attr.aria-busy]="isLoadingMetadata"
+      (click)="refreshMetadata()"
+    >
+      {{
+        isLoadingMetadata
+          ? "Actualizando proyectos..."
+          : "Actualizar proyectos"
+      }}
+    </button>
+  </div>
+  @if (metadataError) {
+    <div class="existing-work-item-error">
+      <app-feedback-message
+        [message]="metadataError"
+        tone="error"
+      ></app-feedback-message>
+      <button type="button" class="btn-secondary" (click)="refreshMetadata()">
+        Reintentar actualización
+      </button>
+    </div>
+  }
+
+  <div class="existing-work-item-search">
+    <div class="field-label">
+      <label for="existing-work-item-search">
+        Work Item
+        @if (selectionRequired) {
+          <app-required-field-marker></app-required-field-marker>
+        }
+      </label>
+      <app-searchable-select
+        formControlName="selectedId"
+        inputId="existing-work-item-search"
+        [options]="workItemOptions"
+        [required]="selectionRequired"
+        placeholder="Busca por ID o título"
+        [emptyText]="emptyMessage"
+        loadingText="Buscando Work Items..."
+        [loading]="isSearching"
+        [allowManualEntry]="false"
+        clearLabel="Limpiar Work Item seleccionado"
+        hint="Ingresa un ID mayor que cero o parte del título."
+        (searchChange)="onSearchChange($event)"
+      ></app-searchable-select>
+    </div>
+
+    @if (criterionError) {
+      <app-feedback-message
+        [message]="criterionError"
+        tone="error"
+      ></app-feedback-message>
+    }
+    @if (searchError) {
+      <div class="existing-work-item-error">
+        <app-feedback-message
+          [message]="searchError"
+          tone="error"
+        ></app-feedback-message>
+        <button type="button" class="btn-secondary" (click)="retrySearch()">
+          Reintentar búsqueda
+        </button>
+      </div>
+    }
+    @if (
+      !isSearching &&
+      hasSearched &&
+      !searchError &&
+      workItemOptions.length === 0
+    ) {
+      <app-feedback-message
+        [message]="emptyMessage"
+        tone="empty"
+      ></app-feedback-message>
+    }
+  </div>
+
+  @if (selectedWorkItem; as selection) {
+    <article
+      class="evaluation-selected-story"
+      aria-label="Work Item seleccionado"
+      aria-live="polite"
+    >
+      <div class="evaluation-selected-story-heading">
+        <span class="work-item-state-badge">{{ selection.summary.state }}</span>
+        <p>{{ selection.summary.displayName }}</p>
+        <button type="button" class="btn-muted" (click)="clearSelection()">
+          Cambiar selección
+        </button>
+      </div>
+      <dl class="evaluation-story-meta">
+        <div>
+          <dt>ID</dt>
+          <dd>{{ selection.summary.id }}</dd>
+        </div>
+        <div>
+          <dt>Tipo</dt>
+          <dd>{{ selection.summary.type }}</dd>
+        </div>
+        <div>
+          <dt>Área</dt>
+          <dd>
+            {{
+              formatPathLabel(selection.summary.areaPath, "area") ||
+                "Sin área informada"
+            }}
+          </dd>
+        </div>
+        <div>
+          <dt>Iteración</dt>
+          <dd>
+            {{
+              formatPathLabel(selection.summary.iterationPath, "iteration") ||
+                "Sin iteración informada"
+            }}
+          </dd>
+        </div>
+      </dl>
+    </article>
+  } @else if (!isSearching && !hasSearched) {
+    <app-feedback-message
+      message="Selecciona un proyecto e ingresa un ID o título para buscar un Work Item."
+      tone="empty"
+    ></app-feedback-message>
+  }
+</section>

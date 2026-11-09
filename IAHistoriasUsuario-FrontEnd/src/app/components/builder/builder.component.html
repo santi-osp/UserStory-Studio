@@ -1,0 +1,255 @@
+<div class="page-shell">
+  <app-page-header
+    title="Diseñar Work Item"
+    subtitle="Completa el destino y la información funcional para generar una vista previa editable."
+  >
+  </app-page-header>
+
+  <div class="content-wrap">
+    @if (!isAzdoConfigured) {
+      <div class="azure-connection-guidance" role="status">
+        <span>{{ azureConnectionMessage }}</span>
+        <a class="btn-secondary" href="/configuracion-azure"
+          >Ir a Configuración Azure</a
+        >
+      </div>
+    }
+    <form class="builder-flow" [formGroup]="form" (ngSubmit)="onGenerate()">
+      <app-section-card
+        class="builder-step-card"
+        eyebrow="Paso 1"
+        title="Ubicación y tipo de Work Item"
+        description="Selecciona el destino y el tipo del Work Item."
+      >
+        <app-work-item-destination-fields
+          [controls]="destinationControls"
+          [projectOptions]="projectSelectOptions"
+          [areaPathOptions]="areaSelectOptions"
+          [iterationPathOptions]="iterationSelectOptions"
+          idPrefix="builder"
+          [projectRequired]="isAiFieldRequired('azdoProject')"
+          [areaRequired]="isAiFieldRequired('areaPath')"
+          [iterationRequired]="isAiFieldRequired('iterationPath')"
+          [projectError]="validationMessage('azdoProject')"
+          [areaError]="validationMessage('areaPath')"
+          [iterationError]="validationMessage('iterationPath')"
+          [loading]="isLoadingAzdoData"
+        >
+          <app-work-item-type-selector
+            work-item-type
+            [controls]="destinationControls"
+            [options]="workItemTypeOptions"
+            inputId="builder-work-item-type"
+            [loading]="isLoadingWorkItemConfig"
+            [error]="workItemConfigError"
+          >
+          </app-work-item-type-selector>
+        </app-work-item-destination-fields>
+        <div class="action-bar mt-6 border-t border-slate-200 pt-4">
+          <p class="text-xs text-slate-500">
+            Actualiza si cambiaste la configuración o si la información no está
+            al día.
+          </p>
+          <button
+            type="button"
+            class="btn-secondary"
+            [disabled]="isLoadingAzdoData"
+            (click)="refreshAzdoData(true)"
+          >
+            {{
+              isLoadingAzdoData
+                ? "Actualizando Azure…"
+                : "Actualizar información de Azure DevOps"
+            }}
+          </button>
+          @if (azdoDataError && canRetryAzdoData) {
+            <button
+              type="button"
+              class="btn-muted"
+              [disabled]="isLoadingAzdoData"
+              (click)="refreshAzdoData(true)"
+            >
+              Reintentar
+            </button>
+          }
+        </div>
+        <app-feedback-message
+          [message]="azdoDataMessage"
+        ></app-feedback-message>
+        <app-feedback-message
+          [message]="azdoDataWarning"
+          tone="warning"
+        ></app-feedback-message>
+        <app-feedback-message
+          [message]="azdoDataError"
+          tone="error"
+        ></app-feedback-message>
+      </app-section-card>
+
+      @if (supportsTestCasesForSelectedType && isWorkItemMetadataReady) {
+        <app-section-card
+          class="builder-step-card"
+          eyebrow="Paso 2"
+          title="Configuración de Test Cases"
+          description="Decide si se generarán Test Cases y define sus condiciones."
+        >
+          <app-test-case-generation-settings
+            [controls]="testCaseControls"
+            [stateOptions]="tcStateOptions"
+            [testPlanOptions]="testPlanSelectOptions"
+            [catalogState]="testPlanCatalogState"
+            [catalogMessage]="testPlansMessage"
+            [catalogError]="testPlansError"
+            idPrefix="builder"
+            [submitAttempted]="submitAttempted"
+            (retryTestPlans)="refreshTestPlans(true)"
+          >
+          </app-test-case-generation-settings>
+        </app-section-card>
+      } @else if (!supportsTestCasesForSelectedType) {
+        <app-section-card
+          class="builder-step-card"
+          eyebrow="Paso 2"
+          [title]="'Test Cases no aplican para ' + selectedWorkItemType.value"
+          description="Este tipo de Work Item se generará sin Test Cases."
+        >
+          <app-feedback-message
+            message="Puedes continuar sin configurar casos de prueba."
+          ></app-feedback-message>
+        </app-section-card>
+      } @else {
+        <app-section-card
+          class="builder-step-card"
+          eyebrow="Paso 2"
+          title="Configuración de Test Cases"
+          description="Disponible cuando se carguen los campos del proyecto y del tipo de Work Item."
+        >
+          <app-feedback-message
+            [message]="
+              isLoadingWorkItemConfig
+                ? 'Cargando estados disponibles…'
+                : workItemConfigError ||
+                  'Selecciona un proyecto para continuar.'
+            "
+            [tone]="
+              workItemConfigError
+                ? 'warning'
+                : isLoadingWorkItemConfig
+                  ? 'loading'
+                  : 'info'
+            "
+          ></app-feedback-message>
+        </app-section-card>
+      }
+
+      <app-section-card
+        class="builder-step-card"
+        eyebrow="Paso 3"
+        title="Campos de Azure DevOps"
+        description="Completa los campos configurados para el proyecto y el tipo seleccionados."
+      >
+        @if (dynamicWorkItemFieldConfigs.length > 0) {
+          <app-work-item-dynamic-fields-form
+            [formGroup]="form"
+            [fields]="dynamicWorkItemFieldConfigs"
+            [controlPrefix]="dynamicControlPrefix"
+            [validationMessages]="dynamicValidationMessages"
+            checkboxFieldClass="builder-checkbox-field"
+          >
+          </app-work-item-dynamic-fields-form>
+          <app-feedback-message
+            [message]="workItemConfigMessage"
+          ></app-feedback-message>
+        } @else {
+          <app-feedback-message
+            [message]="
+              isLoadingWorkItemConfig
+                ? 'Cargando campos del Work Item…'
+                : workItemConfigError
+                  ? 'Los campos no están disponibles por un error remoto.'
+                  : workItemConfigMessage ||
+                    'Selecciona un proyecto para consultar sus campos.'
+            "
+            [tone]="
+              workItemConfigError
+                ? 'warning'
+                : isLoadingWorkItemConfig
+                  ? 'loading'
+                  : 'info'
+            "
+          ></app-feedback-message>
+        }
+        <app-feedback-message
+          [message]="workItemConfigError"
+          tone="error"
+        ></app-feedback-message>
+      </app-section-card>
+
+      <app-section-card
+        class="builder-step-card"
+        eyebrow="Paso 4"
+        title="Describe la necesidad"
+        description="Explica qué necesita el usuario, para qué lo necesita y las reglas relevantes."
+      >
+        <label class="field-label" for="builder-need">
+          <span
+            >Descripción de la necesidad
+            @if (isAiFieldRequired("need")) {
+              <app-required-field-marker></app-required-field-marker>
+            }
+          </span>
+          <textarea
+            id="builder-need"
+            rows="7"
+            class="field-input builder-need-textarea"
+            formControlName="need"
+            [attr.aria-required]="isAiFieldRequired('need') ? 'true' : null"
+            [attr.aria-invalid]="!!validationMessage('need')"
+            [attr.aria-describedby]="
+              validationMessage('need') ? 'builder-need-error' : null
+            "
+            placeholder="Ejemplo: Como usuario necesito consultar el estado de mis solicitudes para hacer seguimiento sin depender de soporte."
+          ></textarea>
+          <app-field-validation-message
+            [message]="validationMessage('need')"
+            messageId="builder-need-error"
+          ></app-field-validation-message>
+        </label>
+      </app-section-card>
+
+      <app-section-card
+        class="builder-step-card builder-action-card"
+        eyebrow="Paso 5"
+        title="Generación de vista previa"
+        description="Valida la información y prepara directamente una versión editable en Preview."
+      >
+        <div class="builder-action-layout">
+          <div class="action-bar builder-main-actions">
+            <button
+              type="submit"
+              class="btn-primary"
+              [disabled]="isSubmittingPreview"
+              [attr.aria-busy]="isSubmittingPreview"
+            >
+              @if (isSubmittingPreview) {
+                <app-loading-spinner size="small"></app-loading-spinner>
+              }
+              {{
+                isSubmittingPreview
+                  ? "Preparando vista previa…"
+                  : "Generar vista previa"
+              }}
+            </button>
+            <button type="button" class="btn-muted" (click)="resetTemplate()">
+              Restablecer formulario
+            </button>
+          </div>
+        </div>
+        <app-feedback-message
+          [message]="message"
+          [tone]="builderMessageTone"
+        ></app-feedback-message>
+      </app-section-card>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,122 @@
+{
+  // Referencia jerarquica; Azure Functions no lee este archivo.
+  // Cada objeto con "appSetting" representa exactamente una clave plana del example y de Azure App Settings.
+  // "absoluteCeiling" es una politica fija en codigo y nunca se publica como App Setting.
+  // Toda configuracion invalida produce OptionsValidationException durante el arranque.
+  "FunctionHost": {
+    "AzureWebJobsStorage": { "appSetting": "AzureWebJobsStorage", "purpose": "Storage requerido por el host de Functions.", "type": "string", "default": "UseDevelopmentStorage=true", "minimum": null, "maximum": null, "required": true, "secret": true, "conditionalProvider": null, "optional": false, "absoluteCeiling": "Conexion valida segun el ambiente", "invalidConsequence": "El host no inicia o no puede operar." },
+    "WorkerRuntime": { "appSetting": "FUNCTIONS_WORKER_RUNTIME", "purpose": "Selecciona el worker .NET isolated.", "type": "string", "default": "dotnet-isolated", "minimum": null, "maximum": null, "required": true, "secret": false, "conditionalProvider": null, "optional": false, "absoluteCeiling": "dotnet-isolated", "invalidConsequence": "El host no carga el worker correcto." },
+    "ExtensionVersion": { "appSetting": "FUNCTIONS_EXTENSION_VERSION", "purpose": "Fija la linea mayor del runtime Azure Functions.", "type": "string", "default": "~4", "minimum": null, "maximum": null, "required": true, "secret": false, "conditionalProvider": null, "optional": false, "absoluteCeiling": "~4", "invalidConsequence": "El host puede usar una version incompatible." }
+  },
+
+  "AiConnection": {
+    "Provider": { "appSetting": "AiConnection__Provider", "purpose": "Selecciona un unico proveedor de IA sin fallback.", "type": "string", "default": null, "minimum": null, "maximum": null, "required": true, "secret": false, "conditionalProvider": null, "optional": false, "absoluteCeiling": "OpenAI o N8n", "invalidConsequence": "El proceso falla al iniciar." },
+    "TimeoutSeconds": { "appSetting": "AiConnection__TimeoutSeconds", "purpose": "Timeout por intento IA; junto con retries y demora no puede superar 600000 ms totales.", "type": "integer", "default": 100, "minimum": 1, "maximum": 300, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 300, "invalidConsequence": "El proceso falla al iniciar." },
+    "RetryCount": { "appSetting": "AiConnection__RetryCount", "purpose": "Reintentos solo para fallos transitorios y dentro del presupuesto total de 600000 ms.", "type": "integer", "default": 0, "minimum": 0, "maximum": 5, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 5, "invalidConsequence": "El proceso falla al iniciar." },
+    "RetryDelayMilliseconds": { "appSetting": "AiConnection__RetryDelayMilliseconds", "purpose": "Espera fija entre reintentos IA, incluida en el presupuesto total de 600000 ms.", "type": "integer", "default": 250, "minimum": 0, "maximum": 60000, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 60000, "invalidConsequence": "El proceso falla al iniciar." },
+    "MaxResponseBodyBytes": { "appSetting": "AiConnection__MaxResponseBodyBytes", "purpose": "Maximo de bytes leidos de una respuesta IA.", "type": "integer", "default": 4194304, "minimum": 1, "maximum": 8388608, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 8388608, "invalidConsequence": "El proceso falla al iniciar." },
+    "MaxPromptLength": { "appSetting": "AiConnection__MaxPromptLength", "purpose": "Maximo de caracteres por prompt de entrada.", "type": "integer", "default": 500000, "minimum": 1, "maximum": 500000, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 500000, "invalidConsequence": "El proceso falla al iniciar." },
+    "MaxModelLength": { "appSetting": "AiConnection__MaxModelLength", "purpose": "Maximo de caracteres de un identificador de modelo.", "type": "integer", "default": 128, "minimum": 1, "maximum": 128, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 128, "invalidConsequence": "El proceso falla al iniciar." },
+    "OpenAI": {
+      "ApiKey": { "appSetting": "AiConnection__OpenAI__ApiKey", "purpose": "Credencial enviada solo a OpenAI.", "type": "string", "default": null, "minimum": null, "maximum": null, "required": true, "secret": true, "conditionalProvider": "OpenAI", "optional": false, "absoluteCeiling": "No placeholders; nunca se registra", "invalidConsequence": "El proceso falla al iniciar cuando Provider=OpenAI." },
+      "BaseUrl": { "appSetting": "AiConnection__OpenAI__BaseUrl", "purpose": "URL base absoluta de OpenAI.", "type": "uri", "default": null, "minimum": null, "maximum": null, "required": true, "secret": false, "conditionalProvider": "OpenAI", "optional": false, "absoluteCeiling": "HTTPS sin user-info ni fragment", "invalidConsequence": "El proceso falla al iniciar cuando Provider=OpenAI." },
+      "DefaultModel": { "appSetting": "AiConnection__OpenAI__DefaultModel", "purpose": "Modelo usado cuando el request no lo especifica.", "type": "string", "default": null, "minimum": 1, "maximum": "AiConnection__MaxModelLength", "required": true, "secret": false, "conditionalProvider": "OpenAI", "optional": false, "absoluteCeiling": 128, "invalidConsequence": "El proceso falla al iniciar cuando Provider=OpenAI." }
+    },
+    "N8n": {
+      "Url": { "appSetting": "AiConnection__N8n__Url", "purpose": "Webhook HTTPS del proveedor N8n.", "type": "uri", "default": null, "minimum": null, "maximum": null, "required": true, "secret": true, "conditionalProvider": "N8n", "optional": false, "absoluteCeiling": "HTTPS sin user-info ni fragment", "invalidConsequence": "El proceso falla al iniciar cuando Provider=N8n." },
+      "DefaultModel": { "appSetting": "AiConnection__N8n__DefaultModel", "purpose": "Modelo enviado al webhook cuando el request no lo especifica.", "type": "string", "default": null, "minimum": 1, "maximum": "AiConnection__MaxModelLength", "required": true, "secret": false, "conditionalProvider": "N8n", "optional": false, "absoluteCeiling": 128, "invalidConsequence": "El proceso falla al iniciar cuando Provider=N8n." }
+    }
+  },
+
+  "AzureDevOps": {
+    "Search": {
+      "DefaultTop": { "appSetting": "AzureDevOps__Search__DefaultTop", "purpose": "Cantidad predeterminada de resultados de busqueda.", "type": "integer", "default": 100, "minimum": 1, "maximum": 200, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 200, "invalidConsequence": "El proceso falla al iniciar." },
+      "MaxTop": { "appSetting": "AzureDevOps__Search__MaxTop", "purpose": "Maximo solicitado por una busqueda; debe ser mayor o igual a DefaultTop.", "type": "integer", "default": 200, "minimum": 1, "maximum": 200, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 200, "invalidConsequence": "El proceso falla al iniciar." },
+      "MaxSearchTextLength": { "appSetting": "AzureDevOps__Search__MaxSearchTextLength", "purpose": "Maximo de caracteres del texto WIQL de busqueda.", "type": "integer", "default": 256, "minimum": 1, "maximum": 256, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 256, "invalidConsequence": "El proceso falla al iniciar." }
+    },
+    "Http": {
+      "TimeoutSeconds": { "appSetting": "AzureDevOps__Http__TimeoutSeconds", "purpose": "Timeout por intento Azure DevOps; junto con retries y backoff no puede superar 600000 ms totales.", "type": "integer", "default": 100, "minimum": 1, "maximum": 300, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 300, "invalidConsequence": "El proceso falla al iniciar." },
+      "RetryCount": { "appSetting": "AzureDevOps__Http__RetryCount", "purpose": "Reintentos acotados de lecturas idempotentes, dentro del presupuesto total de 600000 ms.", "type": "integer", "default": 2, "minimum": 0, "maximum": 5, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 5, "invalidConsequence": "El proceso falla al iniciar." },
+      "RetryDelayMilliseconds": { "appSetting": "AzureDevOps__Http__RetryDelayMilliseconds", "purpose": "Demora inicial del backoff Azure DevOps, incluida en el presupuesto total de 600000 ms.", "type": "integer", "default": 500, "minimum": 0, "maximum": 60000, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 60000, "invalidConsequence": "El proceso falla al iniciar." }
+    },
+    "Defaults": {
+      "Organization": { "appSetting": "AzureDevOps__Defaults__Organization", "purpose": "Organizacion usada solo si el request no aporta contexto.", "type": "string", "default": "", "minimum": 0, "maximum": "AzureDevOps__Limits__MaxOrganizationLength", "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 256, "invalidConsequence": "El proceso falla al iniciar." },
+      "Project": { "appSetting": "AzureDevOps__Defaults__Project", "purpose": "Proyecto usado solo si el request no aporta contexto.", "type": "string", "default": "", "minimum": 0, "maximum": "AzureDevOps__Limits__MaxProjectLength", "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 256, "invalidConsequence": "El proceso falla al iniciar." },
+      "AreaPath": { "appSetting": "AzureDevOps__Defaults__AreaPath", "purpose": "Area Path usado solo si el request no lo aporta.", "type": "string", "default": "", "minimum": 0, "maximum": "AzureDevOps__Limits__MaxPathLength", "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 4000, "invalidConsequence": "El proceso falla al iniciar." },
+      "IterationPath": { "appSetting": "AzureDevOps__Defaults__IterationPath", "purpose": "Iteration Path usado solo si el request no lo aporta.", "type": "string", "default": "", "minimum": 0, "maximum": "AzureDevOps__Limits__MaxPathLength", "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 4000, "invalidConsequence": "El proceso falla al iniciar." }
+    },
+    "Limits": {
+      "MaxOrganizationLength": { "appSetting": "AzureDevOps__Limits__MaxOrganizationLength", "purpose": "Longitud maxima de organizacion.", "type": "integer", "default": 256, "minimum": 1, "maximum": 256, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 256, "invalidConsequence": "El proceso falla al iniciar." },
+      "MaxProjectLength": { "appSetting": "AzureDevOps__Limits__MaxProjectLength", "purpose": "Longitud maxima de proyecto o tipo corto.", "type": "integer", "default": 256, "minimum": 1, "maximum": 256, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 256, "invalidConsequence": "El proceso falla al iniciar." },
+      "MaxPathLength": { "appSetting": "AzureDevOps__Limits__MaxPathLength", "purpose": "Longitud maxima de Area/Iteration/Azure Path.", "type": "integer", "default": 4000, "minimum": 1, "maximum": 4000, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 4000, "invalidConsequence": "El proceso falla al iniciar." },
+      "MaxWorkItemIds": { "appSetting": "AzureDevOps__Limits__MaxWorkItemIds", "purpose": "Cantidad maxima de Work Item IDs por request de comentarios.", "type": "integer", "default": 200, "minimum": 1, "maximum": 200, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 200, "invalidConsequence": "El proceso falla al iniciar." },
+      "MaxReferenceNameLength": { "appSetting": "AzureDevOps__Limits__MaxReferenceNameLength", "purpose": "Longitud maxima de referenceName dinamico.", "type": "integer", "default": 256, "minimum": 1, "maximum": 256, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 256, "invalidConsequence": "El proceso falla al iniciar." },
+      "ReferenceNameRegexTimeoutMilliseconds": { "appSetting": "AzureDevOps__Limits__ReferenceNameRegexTimeoutMilliseconds", "purpose": "Timeout de regex para validar referenceName.", "type": "integer", "default": 100, "minimum": 1, "maximum": 100, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 100, "invalidConsequence": "El proceso falla al iniciar." }
+    },
+    "Queries": {
+      "ProjectsTop": { "appSetting": "AzureDevOps__Queries__ProjectsTop", "purpose": "Tamano de pagina al listar proyectos.", "type": "integer", "default": 100, "minimum": 1, "maximum": 100, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 100, "invalidConsequence": "El proceso falla al iniciar." },
+      "ClassificationDepth": { "appSetting": "AzureDevOps__Queries__ClassificationDepth", "purpose": "Profundidad solicitada para classification nodes.", "type": "integer", "default": 100, "minimum": 1, "maximum": 100, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 100, "invalidConsequence": "El proceso falla al iniciar." },
+      "CommentsTop": { "appSetting": "AzureDevOps__Queries__CommentsTop", "purpose": "Tamano de pagina al consultar comentarios.", "type": "integer", "default": 200, "minimum": 1, "maximum": 200, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 200, "invalidConsequence": "El proceso falla al iniciar." },
+      "TestPlansTop": { "appSetting": "AzureDevOps__Queries__TestPlansTop", "purpose": "Tamano de pagina al listar Test Plans.", "type": "integer", "default": 50, "minimum": 1, "maximum": 50, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 50, "invalidConsequence": "El proceso falla al iniciar." }
+    },
+    "Creation": {
+      "StaticSuiteNameAttempts": { "appSetting": "AzureDevOps__Creation__StaticSuiteNameAttempts", "purpose": "Intentos para resolver colisiones de nombres de suites estaticas.", "type": "integer", "default": 3, "minimum": 1, "maximum": 3, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 3, "invalidConsequence": "El proceso falla al iniciar." }
+    }
+  },
+
+  "RequestLimits": {
+    "SmallBodyBytes": { "appSetting": "RequestLimits__SmallBodyBytes", "purpose": "Maximo de body para endpoints pequenos.", "type": "integer", "default": 65536, "minimum": 1, "maximum": 262144, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 262144, "invalidConsequence": "El proceso falla al iniciar." },
+    "AiBodyBytes": { "appSetting": "RequestLimits__AiBodyBytes", "purpose": "Maximo de body para generacion/evaluacion IA.", "type": "integer", "default": 2097152, "minimum": 1, "maximum": 4194304, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 4194304, "invalidConsequence": "El proceso falla al iniciar." },
+    "WorkItemBodyBytes": { "appSetting": "RequestLimits__WorkItemBodyBytes", "purpose": "Maximo de body para creacion de Work Items/Test Cases.", "type": "integer", "default": 2097152, "minimum": 1, "maximum": 4194304, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 4194304, "invalidConsequence": "El proceso falla al iniciar." },
+    "ArchitectureBodyBytes": { "appSetting": "RequestLimits__ArchitectureBodyBytes", "purpose": "Maximo de body para integracion de arquitectura.", "type": "integer", "default": 2097152, "minimum": 1, "maximum": 4194304, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 4194304, "invalidConsequence": "El proceso falla al iniciar." },
+    "CvBodyBytes": { "appSetting": "RequestLimits__CvBodyBytes", "purpose": "Maximo de body para analisis de CV.", "type": "integer", "default": 1048576, "minimum": 1, "maximum": 2097152, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 2097152, "invalidConsequence": "El proceso falla al iniciar." }
+  },
+
+  "RequestValidation": {
+    "MaxJsonDepth": { "appSetting": "RequestValidation__MaxJsonDepth", "purpose": "Profundidad unica para validacion y serializacion JSON.", "type": "integer", "default": 32, "minimum": 1, "maximum": 64, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 64, "invalidConsequence": "El proceso falla al iniciar." },
+    "MaxSecretHeaderLength": { "appSetting": "RequestValidation__MaxSecretHeaderLength", "purpose": "Longitud maxima de headers secretos como PAT.", "type": "integer", "default": 1024, "minimum": 1, "maximum": 1024, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 1024, "invalidConsequence": "El proceso falla al iniciar." },
+    "MaxCorrelationIdLength": { "appSetting": "RequestValidation__MaxCorrelationIdLength", "purpose": "Longitud maxima del correlation ID aceptado del cliente.", "type": "integer", "default": 128, "minimum": 1, "maximum": 128, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 128, "invalidConsequence": "El proceso falla al iniciar." }
+  },
+
+  "Transport": {
+    "ReadBufferBytes": { "appSetting": "Transport__ReadBufferBytes", "purpose": "Buffer compartido por lectura de requests y respuestas IA; nunca supera el cuerpo permitido.", "type": "integer", "default": 16384, "minimum": 1024, "maximum": 65536, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 65536, "invalidConsequence": "El proceso falla al iniciar." }
+  },
+
+  "WorkItemLimits": {
+    "MaxTitleLength": { "appSetting": "WorkItemLimits__MaxTitleLength", "purpose": "Longitud maxima de titulos de Work Items/Test Cases.", "type": "integer", "default": 255, "minimum": 1, "maximum": 255, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 255, "invalidConsequence": "El proceso falla al iniciar." },
+    "MaxDescriptionLength": { "appSetting": "WorkItemLimits__MaxDescriptionLength", "purpose": "Longitud maxima de descripcion, criterios y valores rich text.", "type": "integer", "default": 262144, "minimum": 1, "maximum": 262144, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 262144, "invalidConsequence": "El proceso falla al iniciar." },
+    "MaxTestStepTextLength": { "appSetting": "WorkItemLimits__MaxTestStepTextLength", "purpose": "Longitud maxima de accion/resultado esperado de un paso.", "type": "integer", "default": 16384, "minimum": 1, "maximum": 16384, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 16384, "invalidConsequence": "El proceso falla al iniciar." },
+    "MaxTestCases": { "appSetting": "WorkItemLimits__MaxTestCases", "purpose": "Cantidad maxima unica de Test Cases por payload o salida IA.", "type": "integer", "default": 50, "minimum": 1, "maximum": 50, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 50, "invalidConsequence": "El proceso falla al iniciar." },
+    "MaxTestCaseSteps": { "appSetting": "WorkItemLimits__MaxTestCaseSteps", "purpose": "Cantidad maxima de pasos por Test Case.", "type": "integer", "default": 100, "minimum": 1, "maximum": 100, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 100, "invalidConsequence": "El proceso falla al iniciar." },
+    "MaxAdditionalFields": { "appSetting": "WorkItemLimits__MaxAdditionalFields", "purpose": "Cantidad maxima de campos dinamicos adicionales.", "type": "integer", "default": 100, "minimum": 1, "maximum": 100, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 100, "invalidConsequence": "El proceso falla al iniciar." }
+  },
+
+  "ArchitectureIntegration": {
+    "MaxMarkdownLength": { "appSetting": "ArchitectureIntegration__MaxMarkdownLength", "purpose": "Maximo de caracteres Markdown procesados.", "type": "integer", "default": 1000000, "minimum": 1, "maximum": 1000000, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 1000000, "invalidConsequence": "El proceso falla al iniciar." }
+  },
+
+  "CvAnalysis": {
+    "MaxTextLength": { "appSetting": "CvAnalysis__MaxTextLength", "purpose": "Maximo de caracteres de CV aceptados en el request.", "type": "integer", "default": 200000, "minimum": 1, "maximum": 200000, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 200000, "invalidConsequence": "El proceso falla al iniciar." },
+    "MaxPromptTextLength": { "appSetting": "CvAnalysis__MaxPromptTextLength", "purpose": "Maximo de texto CV incluido en el prompt; no puede superar MaxTextLength.", "type": "integer", "default": 18000, "minimum": 1, "maximum": 18000, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 18000, "invalidConsequence": "El proceso falla al iniciar." },
+    "MaxPageCount": { "appSetting": "CvAnalysis__MaxPageCount", "purpose": "Maximo de paginas reportadas para un CV.", "type": "integer", "default": 1000, "minimum": 1, "maximum": 1000, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 1000, "invalidConsequence": "El proceso falla al iniciar." }
+  },
+
+  "Observability": {
+    "MaxScalarLogLength": { "appSetting": "Observability__MaxScalarLogLength", "purpose": "Maximo de caracteres de valores escalares sanitizados en logs.", "type": "integer", "default": 300, "minimum": 1, "maximum": 300, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 300, "invalidConsequence": "El proceso falla al iniciar." },
+    "MaxContextArrayItems": { "appSetting": "Observability__MaxContextArrayItems", "purpose": "Maximo de elementos por arreglo de contexto registrado.", "type": "integer", "default": 20, "minimum": 1, "maximum": 20, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 20, "invalidConsequence": "El proceso falla al iniciar." },
+    "MaxGenericTextLength": { "appSetting": "Observability__MaxGenericTextLength", "purpose": "Longitud generica predeterminada para truncamiento seguro.", "type": "integer", "default": 1000, "minimum": 1, "maximum": 1000, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 1000, "invalidConsequence": "El proceso falla al iniciar." },
+    "MaxExternalErrorDetailLength": { "appSetting": "Observability__MaxExternalErrorDetailLength", "purpose": "Maximo de detalle externo Azure DevOps previamente sanitizado.", "type": "integer", "default": 500, "minimum": 1, "maximum": 500, "required": false, "secret": false, "conditionalProvider": null, "optional": true, "absoluteCeiling": 500, "invalidConsequence": "El proceso falla al iniciar." }
+  },
+
+  "Authentication": {
+    // No existe autenticacion de plataforma declarada por este repositorio.
+    "Owner": "HttpTrigger AuthorizationLevel.Anonymous",
+    "LocalBehavior": "Mismo nivel anonimo que los ambientes desplegados"
+  },
+  "Cors": {
+    // No existe Cors__AllowedOrigins interno. Azure usa ARM web.cors y local usa Core Tools.
+    "AzureOwner": "ARM web.cors",
+    "LocalAllowedOrigin": "http://localhost:4200",
+    "SupportCredentials": false
+  }
+}

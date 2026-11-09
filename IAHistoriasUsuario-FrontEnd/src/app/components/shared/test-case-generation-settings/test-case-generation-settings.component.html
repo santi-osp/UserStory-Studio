@@ -1,0 +1,201 @@
+@if (compatible) {
+  <fieldset class="space-y-4">
+    <legend class="sr-only">Configuración de Test Cases</legend>
+    <div
+      class="grid gap-3 md:grid-cols-2"
+      role="radiogroup"
+      aria-label="Uso de Test Cases"
+    >
+      <button
+        type="button"
+        class="choice-card"
+        [class.choice-card-selected]="enabled"
+        [attr.aria-pressed]="enabled"
+        (click)="setEnabled(true)"
+      >
+        <span class="block text-sm font-semibold">Usar Test Cases</span>
+        <span class="block pt-1 text-xs font-normal opacity-80"
+          >Genera Test Cases y los asocia a un Test Plan.</span
+        >
+      </button>
+      <button
+        type="button"
+        class="choice-card"
+        [class.choice-card-selected]="!enabled"
+        [attr.aria-pressed]="!enabled"
+        (click)="setEnabled(false)"
+      >
+        <span class="block text-sm font-semibold">No usar Test Cases</span>
+        <span class="block pt-1 text-xs font-normal opacity-80"
+          >El resultado no incluirá casos de prueba.</span
+        >
+      </button>
+    </div>
+
+    @if (enabled) {
+      <div class="builder-subsection">
+        <p class="text-sm font-semibold text-ink">Cómo definir la cantidad</p>
+        <div
+          class="grid gap-3 md:grid-cols-2"
+          role="radiogroup"
+          aria-label="Modo de cantidad"
+        >
+          <button
+            type="button"
+            class="choice-card choice-card-compact"
+            [class.choice-card-selected]="!aiDecides"
+            [attr.aria-pressed]="!aiDecides"
+            (click)="setAiDecision(false)"
+          >
+            <span class="block text-sm font-semibold">Cantidad fija</span>
+            <span class="block pt-1 text-xs font-normal opacity-80"
+              >Define exactamente cuántos Test Cases crear.</span
+            >
+          </button>
+          <button
+            type="button"
+            class="choice-card choice-card-compact"
+            [class.choice-card-selected]="aiDecides"
+            [attr.aria-pressed]="aiDecides"
+            (click)="setAiDecision(true)"
+          >
+            <span class="block text-sm font-semibold">Que la IA decida</span>
+            <span class="block pt-1 text-xs font-normal opacity-80"
+              >La IA calcula una cantidad acorde con el contenido.</span
+            >
+          </button>
+        </div>
+
+        @if (!aiDecides) {
+          <div class="field-label">
+            <label [for]="countId"
+              >Cantidad de Test Cases
+              <app-required-field-marker></app-required-field-marker
+            ></label>
+            <input
+              [id]="countId"
+              type="number"
+              min="1"
+              max="50"
+              class="field-input"
+              [formControl]="controls.quantity"
+              aria-required="true"
+              [attr.aria-invalid]="controls.quantity.invalid"
+              [attr.aria-describedby]="
+                controls.quantity.invalid ? countId + '-error' : null
+              "
+              (blur)="normalizeQuantity()"
+            />
+            <app-field-validation-message
+              [message]="
+                controls.quantity.invalid &&
+                (submitAttempted || controls.quantity.touched)
+                  ? 'Ingresa una cantidad válida de Test Cases.'
+                  : ''
+              "
+              [messageId]="countId + '-error'"
+            ></app-field-validation-message>
+          </div>
+        } @else {
+          <app-feedback-message
+            message="La IA definirá la cantidad de Test Cases según la complejidad del contenido."
+          ></app-feedback-message>
+        }
+      </div>
+
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="field-label">
+          <label [for]="stateId"
+            >Estado de Test Cases
+            <app-required-field-marker></app-required-field-marker
+          ></label>
+          <app-simple-select
+            [formControl]="controls.state"
+            [inputId]="stateId"
+            [options]="stateOptions"
+            [clearable]="false"
+            [required]="true"
+            [invalid]="controls.state.invalid"
+            [describedBy]="controls.state.invalid ? stateId + '-error' : ''"
+            placeholder="Selecciona una opción"
+            ariaLabel="Mostrar estados de Test Case"
+          >
+          </app-simple-select>
+          <app-field-validation-message
+            [message]="
+              controls.state.invalid &&
+              (submitAttempted || controls.state.touched)
+                ? 'Selecciona un estado válido para los Test Cases.'
+                : ''
+            "
+            [messageId]="stateId + '-error'"
+          ></app-field-validation-message>
+        </div>
+
+        <div class="field-label">
+          <label [for]="testPlanId"
+            >Test Plan asociado
+            <app-required-field-marker></app-required-field-marker
+          ></label>
+          <app-searchable-select
+            [formControl]="controls.testPlanId"
+            [inputId]="testPlanId"
+            [options]="testPlanOptions"
+            [emptyValue]="null"
+            [clearable]="false"
+            [required]="true"
+            [invalid]="showTestPlanError"
+            [describedBy]="showTestPlanError ? testPlanId + '-error' : ''"
+            placeholder="Busca y selecciona el Test Plan"
+            emptyText="No hay Test Plans disponibles en este proyecto."
+            loadingText="Cargando Test Plans..."
+            [loading]="catalogState === 'loading'"
+            [errorText]="catalogState === 'error' ? catalogError : ''"
+            hint="El Test Plan debe pertenecer al proyecto actual."
+          >
+          </app-searchable-select>
+          <app-field-validation-message
+            [message]="testPlanError"
+            [messageId]="testPlanId + '-error'"
+          ></app-field-validation-message>
+        </div>
+      </div>
+
+      @if (catalogState === "loading") {
+        <app-feedback-message
+          message="Cargando Test Plans…"
+          tone="loading"
+        ></app-feedback-message>
+      } @else if (catalogState === "empty") {
+        <app-feedback-message
+          message="No hay Test Plans disponibles en este proyecto."
+          tone="warning"
+        ></app-feedback-message>
+      } @else if (catalogState === "error") {
+        <div class="action-bar">
+          <app-feedback-message
+            [message]="catalogError || 'No fue posible cargar los Test Plans.'"
+            tone="error"
+          ></app-feedback-message>
+          <button
+            type="button"
+            class="btn-muted"
+            (click)="retryTestPlans.emit()"
+          >
+            Reintentar
+          </button>
+        </div>
+      } @else {
+        <app-feedback-message [message]="catalogMessage"></app-feedback-message>
+      }
+    } @else {
+      <app-feedback-message
+        message="Cantidad, estado y Test Plan no se solicitan cuando no se generan Test Cases."
+      ></app-feedback-message>
+    }
+  </fieldset>
+} @else {
+  <app-feedback-message
+    message="Este tipo de Work Item se generará sin Test Cases."
+  ></app-feedback-message>
+}

@@ -1,0 +1,165 @@
+<div class="creation-dialog-backdrop" (mousedown)="requestClose()">
+  <section
+    #dialog
+    class="creation-dialog"
+    role="dialog"
+    aria-modal="true"
+    tabindex="-1"
+    aria-labelledby="creation-dialog-title"
+    aria-describedby="creation-dialog-status"
+    [attr.aria-busy]="busy"
+    (mousedown)="$event.stopPropagation()"
+  >
+    <header class="creation-dialog-header">
+      <div>
+        <p class="creation-dialog-eyebrow">Azure DevOps</p>
+        <h2 id="creation-dialog-title">{{ title }}</h2>
+      </div>
+      <button
+        #initialFocus
+        type="button"
+        class="creation-dialog-close"
+        aria-label="Volver a editar"
+        [disabled]="!canClose"
+        (click)="requestClose()"
+      >
+        ×
+      </button>
+    </header>
+
+    <div class="creation-dialog-body">
+      <div
+        id="creation-dialog-status"
+        class="creation-dialog-status"
+        aria-live="polite"
+      >
+        @if (busy) {
+          <span class="creation-dialog-spinner" aria-hidden="true"></span>
+        }
+        <p>{{ state.message }}</p>
+      </div>
+
+      @if (state.error) {
+        <div class="creation-dialog-alert" role="alert">
+          <strong>{{
+            state.phase === "invalid"
+              ? "Revisa la información"
+              : "No se pudo completar la operación"
+          }}</strong>
+          <span>{{ state.error }}</span>
+        </div>
+      }
+      @if (state.issues.length) {
+        <ul
+          class="creation-dialog-issues"
+          aria-label="Campos que requieren corrección"
+        >
+          @for (issue of state.issues; track issue) {
+            <li>{{ issue }}</li>
+          }
+        </ul>
+      }
+      @if (state.warnings.length) {
+        <ul class="creation-dialog-warnings" aria-label="Advertencias">
+          @for (warning of state.warnings; track warning) {
+            <li>{{ warning }}</li>
+          }
+        </ul>
+      }
+
+      <section aria-labelledby="creation-dialog-summary-title">
+        <h3 id="creation-dialog-summary-title">Resumen</h3>
+        <dl class="creation-dialog-grid">
+          <div>
+            <dt>Organización</dt>
+            <dd>{{ state.summary.organization || "Sin configurar" }}</dd>
+          </div>
+          <div>
+            <dt>Proyecto</dt>
+            <dd>{{ state.summary.project || "Sin proyecto" }}</dd>
+          </div>
+          <div>
+            <dt>Tipo</dt>
+            <dd>{{ state.summary.workItemType }}</dd>
+          </div>
+          <div>
+            <dt>Título</dt>
+            <dd>{{ state.summary.title || "Sin título" }}</dd>
+          </div>
+          <div>
+            <dt>Área</dt>
+            <dd>{{ state.summary.areaPath || "Sin área" }}</dd>
+          </div>
+          <div>
+            <dt>Iteración</dt>
+            <dd>{{ state.summary.iterationPath || "Sin iteración" }}</dd>
+          </div>
+          <div>
+            <dt>Test Cases</dt>
+            <dd>{{ state.summary.testCaseCount }}</dd>
+          </div>
+          <div>
+            <dt>Test Plan</dt>
+            <dd>
+              {{
+                state.summary.testPlanId > 0
+                  ? state.summary.testPlanId
+                  : "No asociado"
+              }}
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      @if (state.result; as result) {
+        <section
+          class="creation-dialog-result"
+          aria-labelledby="creation-dialog-result-title"
+        >
+          <h3 id="creation-dialog-result-title">
+            Creación
+            {{
+              result.operationStatus === "partial" ? "parcial" : "completada"
+            }}
+          </h3>
+          <p>{{ result.message }}</p>
+          @if (result.huId) {
+            <p><strong>Work Item:</strong> #{{ result.huId }}</p>
+          }
+          @if ((result.createdTestCases?.length ?? 0) > 0) {
+            <p>
+              <strong>Test Cases creados:</strong>
+              {{ result.createdTestCases?.length }}
+            </p>
+          }
+          @if ((result.failedTestCases?.length ?? 0) > 0) {
+            <p>
+              <strong>Fases con fallo:</strong>
+              {{ result.failedTestCases?.length }}
+            </p>
+          }
+        </section>
+      }
+    </div>
+
+    <footer class="creation-dialog-footer">
+      <button
+        type="button"
+        class="btn-secondary"
+        [disabled]="!canClose"
+        (click)="requestClose()"
+      >
+        {{ state.phase === "result" ? "Cerrar" : "Volver a editar" }}
+      </button>
+      @if (
+        state.phase === "ready" ||
+        state.phase === "error" ||
+        state.phase === "result"
+      ) {
+        <button type="button" class="btn-primary" (click)="requestPrimary()">
+          {{ primaryLabel }}
+        </button>
+      }
+    </footer>
+  </section>
+</div>

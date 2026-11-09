@@ -1,0 +1,56 @@
+:host {
+  display: grid;
+  min-height: min(72vh, 42rem);
+  place-items: center;
+  padding: 1.5rem;
+}
+
+.not-found {
+  display: grid;
+  width: min(100%, 34rem);
+  justify-items: center;
+  margin-top: 10%;
+  gap: 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 18%, #d8def0);
+  border-radius: 1.25rem;
+  background: color-mix(in srgb, var(--brand-surface) 82%, #ffffff);
+  padding: clamp(1.5rem, 5vw, 3rem);
+  text-align: center;
+  box-shadow: 0 24px 54px -38px rgba(26, 42, 98, 0.58);
+}
+
+.not-found-icon {
+  display: grid;
+  width: 4rem;
+  height: 4rem;
+  place-items: center;
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--brand-primary) 10%, #ffffff);
+  color: var(--brand-primary);
+}
+
+.not-found-icon svg {
+  width: 2rem;
+  height: 2rem;
+}
+.not-found-eyebrow {
+  color: var(--brand-primary);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+h1 {
+  color: var(--brand-ink);
+  font-size: clamp(1.5rem, 5vw, 2.125rem);
+  font-weight: 800;
+  line-height: 1.15;
+}
+p:not(.not-found-eyebrow) {
+  max-width: 28rem;
+  color: color-mix(in srgb, var(--brand-ink) 76%, transparent);
+  line-height: 1.6;
+}
+.btn-primary {
+  margin-top: 0.5rem;
+}

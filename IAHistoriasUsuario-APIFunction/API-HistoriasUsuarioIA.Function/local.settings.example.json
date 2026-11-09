@@ -1,0 +1,72 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "FUNCTIONS_EXTENSION_VERSION": "~4",
+
+    "AiConnection__Provider": "OpenAI",
+    "AiConnection__TimeoutSeconds": "100",
+    "AiConnection__RetryCount": "0",
+    "AiConnection__RetryDelayMilliseconds": "250",
+    "AiConnection__MaxResponseBodyBytes": "4194304",
+    "AiConnection__MaxPromptLength": "500000",
+    "AiConnection__MaxModelLength": "128",
+    "AiConnection__OpenAI__ApiKey": "<set-local-openai-api-key>",
+    "AiConnection__OpenAI__BaseUrl": "https://api.openai.com/",
+    "AiConnection__OpenAI__DefaultModel": "gpt-4.1-mini",
+    "AiConnection__N8n__Url": "<set-local-https-n8n-webhook>",
+    "AiConnection__N8n__DefaultModel": "gpt-4.1-mini",
+
+    "AzureDevOps__Search__DefaultTop": "100",
+    "AzureDevOps__Search__MaxTop": "200",
+    "AzureDevOps__Search__MaxSearchTextLength": "256",
+    "AzureDevOps__Http__TimeoutSeconds": "100",
+    "AzureDevOps__Http__RetryCount": "2",
+    "AzureDevOps__Http__RetryDelayMilliseconds": "500",
+    "AzureDevOps__Defaults__Organization": "",
+    "AzureDevOps__Defaults__Project": "",
+    "AzureDevOps__Defaults__AreaPath": "",
+    "AzureDevOps__Defaults__IterationPath": "",
+    "AzureDevOps__Limits__MaxOrganizationLength": "256",
+    "AzureDevOps__Limits__MaxProjectLength": "256",
+    "AzureDevOps__Limits__MaxPathLength": "4000",
+    "AzureDevOps__Limits__MaxWorkItemIds": "200",
+    "AzureDevOps__Limits__MaxReferenceNameLength": "256",
+    "AzureDevOps__Limits__ReferenceNameRegexTimeoutMilliseconds": "100",
+    "AzureDevOps__Queries__ProjectsTop": "100",
+    "AzureDevOps__Queries__ClassificationDepth": "100",
+    "AzureDevOps__Queries__CommentsTop": "200",
+    "AzureDevOps__Queries__TestPlansTop": "50",
+    "AzureDevOps__Creation__StaticSuiteNameAttempts": "3",
+
+    "RequestLimits__SmallBodyBytes": "65536",
+    "RequestLimits__AiBodyBytes": "2097152",
+    "RequestLimits__WorkItemBodyBytes": "2097152",
+    "RequestLimits__ArchitectureBodyBytes": "2097152",
+    "RequestLimits__CvBodyBytes": "1048576",
+
+    "RequestValidation__MaxJsonDepth": "32",
+    "RequestValidation__MaxSecretHeaderLength": "1024",
+    "RequestValidation__MaxCorrelationIdLength": "128",
+    "Transport__ReadBufferBytes": "16384",
+
+    "WorkItemLimits__MaxTitleLength": "255",
+    "WorkItemLimits__MaxDescriptionLength": "262144",
+    "WorkItemLimits__MaxTestStepTextLength": "16384",
+    "WorkItemLimits__MaxTestCases": "50",
+    "WorkItemLimits__MaxTestCaseSteps": "100",
+    "WorkItemLimits__MaxAdditionalFields": "100",
+
+    "ArchitectureIntegration__MaxMarkdownLength": "1000000",
+
+    "CvAnalysis__MaxTextLength": "200000",
+    "CvAnalysis__MaxPromptTextLength": "18000",
+    "CvAnalysis__MaxPageCount": "1000",
+
+    "Observability__MaxScalarLogLength": "300",
+    "Observability__MaxContextArrayItems": "20",
+    "Observability__MaxGenericTextLength": "1000",
+    "Observability__MaxExternalErrorDetailLength": "500"
+  }
+}

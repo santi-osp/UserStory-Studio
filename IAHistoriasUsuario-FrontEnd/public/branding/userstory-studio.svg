@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" role="img" aria-labelledby="title desc">
+  <title id="title">UserStory Studio</title>
+  <desc id="desc">Icono original de una historia con una chispa y una marca de verificación</desc>
+  <defs>
+    <linearGradient id="background" x1="0" x2="1" y2="1">
+      <stop stop-color="#172c4e"/>
+      <stop offset="1" stop-color="#245679"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="76" height="76" rx="19" fill="url(#background)"/>
+  <rect x="18" y="18" width="44" height="44" rx="9" fill="none" stroke="#d8f8f3" stroke-width="3"/>
+  <path d="M27 31h19M27 39h11" fill="none" stroke="#92c9df" stroke-width="3" stroke-linecap="round"/>
+  <path d="m27 50 6 6 12-13" fill="none" stroke="#51e1c1" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m55 12 2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#51e1c1"/>
+</svg>

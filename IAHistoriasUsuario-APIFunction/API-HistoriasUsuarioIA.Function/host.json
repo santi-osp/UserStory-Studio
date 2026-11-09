@@ -1,0 +1,17 @@
+{
+    "version": "2.0",
+    "logging": {
+        "logLevel": {
+            "default": "Warning",
+            "Host.Results": "Warning",
+            "Host.Aggregator": "Warning",
+            "Function": "Information"
+        },
+        "applicationInsights": {
+            "samplingSettings": {
+                "isEnabled": false
+            },
+            "enableLiveMetricsFilters": true
+        }
+    }
+}

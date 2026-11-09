@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "API_HistoriasUsuarioIA_funcion": {
+      "commandName": "Executable",
+      "executablePath": "func",
+      "commandLineArgs": "host start --port 7071 --useHttps --cors http://localhost:4200",
+      "workingDirectory": ".",
+      "launchBrowser": false
+    }
+  }
+}

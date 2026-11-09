@@ -1,0 +1,76 @@
+<section
+  class="toast-viewport"
+  aria-label="Notificaciones"
+  aria-relevant="additions"
+>
+  @for (toast of toastService.toasts$ | async; track toast.id) {
+    <article
+      class="toast"
+      [class.toast-success]="toast.type === 'success'"
+      [class.toast-error]="toast.type === 'error'"
+      [class.toast-warning]="toast.type === 'warning'"
+      [class.toast-info]="toast.type === 'info'"
+      [class.toast-leaving]="toast.state === 'leaving'"
+      [attr.role]="toast.type === 'error' ? 'alert' : 'status'"
+      [attr.aria-live]="toast.type === 'error' ? 'assertive' : 'polite'"
+      aria-atomic="true"
+      (mouseenter)="toastService.pause(toast.id)"
+      (mouseleave)="toastService.resume(toast.id)"
+      (focusin)="toastService.pause(toast.id)"
+      (focusout)="onFocusOut($event, toast.id)"
+    >
+      <span class="toast-icon" aria-hidden="true">
+        @switch (toast.type) {
+          @case ("success") {
+            <svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></svg>
+          }
+          @case ("error") {
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 8v5m0 3h.01" />
+            </svg>
+          }
+          @case ("warning") {
+            <svg viewBox="0 0 24 24">
+              <path d="M12 3 2.5 20h19L12 3Z" />
+              <path d="M12 9v4m0 3h.01" />
+            </svg>
+          }
+          @default {
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 11v5m0-8h.01" />
+            </svg>
+          }
+        }
+      </span>
+      <div class="toast-copy">
+        @if (toast.title) {
+          <p class="toast-title">{{ toast.title }}</p>
+        }
+        <p class="toast-message">{{ toast.message }}</p>
+        @if (toast.action) {
+          <button
+            type="button"
+            class="toast-action"
+            (click)="toastService.executeAction(toast.id)"
+          >
+            {{ toast.action.label }}
+          </button>
+        }
+      </div>
+      @if (toast.dismissible) {
+        <button
+          type="button"
+          class="toast-dismiss"
+          (click)="toastService.dismiss(toast.id)"
+          [attr.aria-label]="'Cerrar notificación: ' + toast.message"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="m7 7 10 10M17 7 7 17" />
+          </svg>
+        </button>
+      }
+    </article>
+  }
+</section>

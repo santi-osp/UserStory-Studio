@@ -1,0 +1,251 @@
+<div class="page-shell">
+  <app-page-header
+    title="Evaluar Work Item"
+    subtitle="Selecciona un Work Item existente en Azure DevOps y revisa una evaluación funcional estructurada."
+  >
+  </app-page-header>
+
+  <main class="content-wrap evaluation-flow">
+    @if (!isAzdoConfigured) {
+      <div class="azure-connection-guidance" role="status">
+        <span
+          >Ingresa tu Azure PAT para consultar Work Items. Los criterios del
+          formulario permanecen disponibles.</span
+        >
+        <a class="btn-secondary" href="/configuracion-azure"
+          >Ir a Configuración Azure</a
+        >
+      </div>
+    }
+    <section class="evaluation-form" [attr.aria-busy]="isEvaluating">
+      <app-section-card
+        class="evaluation-step-card"
+        eyebrow="Selección"
+        title="Work Item existente"
+        description="Selecciona el proyecto, limita la búsqueda si lo necesitas y busca por ID o título."
+      >
+        <app-existing-work-item-selector
+          [initialFilters]="selectorFilters"
+          [initialSelection]="selectedWorkItem"
+          [projectRequired]="isAiFieldRequired('azdoProject')"
+          [selectionRequired]="isAiFieldRequired('workItemId')"
+          (filtersChange)="onFiltersChange($event)"
+          (selectionChange)="onSelectionChange($event)"
+        ></app-existing-work-item-selector>
+
+        <div class="evaluation-primary-actions">
+          <div>
+            <p class="evaluation-action-title">Evaluación funcional</p>
+            <p class="evaluation-action-help">
+              Se enviarán el proyecto y el ID del Work Item seleccionado usando
+              la configuración Azure actual.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="btn-primary"
+            [disabled]="!canEvaluate"
+            [attr.aria-busy]="isEvaluating"
+            (click)="evaluate()"
+          >
+            {{ isEvaluating ? "Evaluando Work Item..." : "Evaluar Work Item" }}
+          </button>
+        </div>
+      </app-section-card>
+    </section>
+
+    <section
+      class="evaluation-feedback-stack"
+      aria-label="Estado de la evaluación"
+    >
+      <app-feedback-message
+        [message]="warning"
+        tone="warning"
+      ></app-feedback-message>
+      <app-feedback-message
+        [message]="status"
+        [tone]="isEvaluating ? 'loading' : 'success'"
+      >
+      </app-feedback-message>
+      <app-feedback-message
+        [message]="error"
+        tone="error"
+      ></app-feedback-message>
+    </section>
+
+    @if (!result && !isEvaluating) {
+      <app-section-card
+        class="evaluation-empty-card"
+        eyebrow="Resultado"
+        title="Aún no hay una evaluación"
+        description="El resultado aparecerá aquí cuando selecciones un Work Item y completes la evaluación."
+      >
+        <app-feedback-message
+          message="La evaluación mostrará puntuación, preparación, hallazgos, riesgos, recomendaciones y una versión mejorada cuando estén disponibles."
+          tone="empty"
+        >
+        </app-feedback-message>
+      </app-section-card>
+    }
+
+    @if (result) {
+      <app-section-card
+        class="evaluation-result-card"
+        eyebrow="Resultado"
+        [title]="'Evaluación de Work Item #' + result.workItemId"
+        [description]="
+          result.workItemType +
+          ' · ' +
+          result.state +
+          ' · Modelo ' +
+          result.model
+        "
+      >
+        <header class="evaluation-result-header">
+          <div class="evaluation-result-title">
+            <p class="evaluation-result-kicker">Historia evaluada</p>
+            <h4>{{ result.title }}</h4>
+          </div>
+          <div class="action-bar evaluation-result-actions">
+            @if (result.workItemUrl) {
+              <a
+                [href]="result.workItemUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn-secondary"
+              >
+                Abrir en Azure DevOps
+              </a>
+            }
+            <button
+              type="button"
+              class="btn-muted"
+              (click)="resetResult()"
+              [disabled]="isEvaluating"
+            >
+              Limpiar resultado
+            </button>
+          </div>
+        </header>
+
+        <div
+          class="evaluation-summary-grid"
+          aria-label="Resumen de la evaluación"
+        >
+          <article class="summary-card evaluation-score-card">
+            <p class="summary-label">Puntaje de calidad</p>
+            <p class="summary-value summary-value-large">
+              {{ result.evaluation.qualityScore }}/5
+            </p>
+            <p class="evaluation-summary-detail">
+              {{ result.evaluation.qualityLevel }}
+            </p>
+            <div class="evaluation-score-track" aria-hidden="true">
+              <span
+                class="evaluation-score-bar"
+                [style.width.%]="qualityScorePercent"
+              ></span>
+            </div>
+          </article>
+          <article class="summary-card">
+            <p class="summary-label">Preparación</p>
+            <p class="summary-value">{{ result.evaluation.readiness }}</p>
+          </article>
+          <article class="summary-card">
+            <p class="summary-label">Prioridad de refinamiento</p>
+            <p class="summary-value">
+              {{ result.evaluation.refinementPriority }}
+            </p>
+          </article>
+          <article class="summary-card">
+            <p class="summary-label">Puntos analizados</p>
+            <p class="summary-value">{{ evaluationItemCount }}</p>
+          </article>
+        </div>
+
+        <article class="content-card evaluation-summary-card">
+          <h4>Resumen</h4>
+          <p>{{ result.evaluation.summary || "Sin resumen disponible." }}</p>
+        </article>
+
+        @if (hasEvaluationLists) {
+          <div class="evaluation-insight-grid">
+            @for (section of sections; track section.key) {
+              @if (getEvaluationList(section.key).length > 0) {
+                <article class="content-card evaluation-insight-card">
+                  <header class="evaluation-insight-heading">
+                    <h4>{{ section.title }}</h4>
+                    <span>{{ getEvaluationList(section.key).length }}</span>
+                  </header>
+                  <ul>
+                    @for (
+                      item of getEvaluationList(section.key);
+                      track trackByValue($index, item)
+                    ) {
+                      <li>{{ item }}</li>
+                    }
+                  </ul>
+                </article>
+              }
+            }
+          </div>
+        } @else {
+          <app-feedback-message
+            message="La evaluación no devolvió hallazgos, recomendaciones ni criterios adicionales."
+            tone="empty"
+          >
+          </app-feedback-message>
+        }
+
+        @if (hasImprovedVersion) {
+          <article class="content-card evaluation-improved-card">
+            <header>
+              <p class="evaluation-result-kicker">Propuesta</p>
+              <h4>Versión mejorada sugerida</h4>
+            </header>
+            <div class="evaluation-improved-grid">
+              @if (result.evaluation.improvedVersion.suggestedTitle) {
+                <div>
+                  <h5>Título sugerido</h5>
+                  <p>{{ result.evaluation.improvedVersion.suggestedTitle }}</p>
+                </div>
+              }
+              @if (result.evaluation.improvedVersion.suggestedDescription) {
+                <div>
+                  <h5>Descripción sugerida</h5>
+                  <p>
+                    {{ result.evaluation.improvedVersion.suggestedDescription }}
+                  </p>
+                </div>
+              }
+            </div>
+            @if (
+              result.evaluation.improvedVersion.suggestedAcceptanceCriteria
+                .length > 0
+            ) {
+              <div class="evaluation-improved-criteria">
+                <h5>Criterios de aceptación</h5>
+                <ul>
+                  @for (
+                    criterion of result.evaluation.improvedVersion
+                      .suggestedAcceptanceCriteria;
+                    track trackByValue($index, criterion)
+                  ) {
+                    <li>{{ criterion }}</li>
+                  }
+                </ul>
+              </div>
+            }
+          </article>
+        }
+
+        <article class="evaluation-conclusion">
+          <p class="evaluation-result-kicker">Conclusión</p>
+          <p>
+            {{ result.evaluation.conclusion || "Sin conclusión disponible." }}
+          </p>
+        </article>
+      </app-section-card>
+    }
+  </main>
+</div>

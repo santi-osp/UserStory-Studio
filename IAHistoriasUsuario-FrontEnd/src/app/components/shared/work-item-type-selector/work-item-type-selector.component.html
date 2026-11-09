@@ -1,0 +1,83 @@
+<div class="field-label">
+  <label [for]="inputId">Tipo de Work Item</label>
+  <div class="path-picker">
+    <div class="path-picker-head">
+      <button
+        type="button"
+        class="field-input field-input-button pr-12"
+        [id]="inputId"
+        aria-haspopup="listbox"
+        [attr.aria-controls]="isOpen ? listId : null"
+        [attr.aria-expanded]="isOpen"
+        [disabled]="loading || control.disabled"
+        (click)="toggle($event)"
+      >
+        <span class="inline-flex items-center gap-3">
+          <span
+            class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold"
+            [ngClass]="selected.badgeClasses"
+            >{{ selected.label }}</span
+          >
+          <span class="text-sm font-medium">{{ selected.value }}</span>
+        </span>
+      </button>
+      <button
+        type="button"
+        class="path-picker-toggle"
+        [disabled]="loading || control.disabled"
+        [attr.aria-expanded]="isOpen"
+        aria-label="Mostrar tipos de work item"
+        (click)="toggle($event)"
+      >
+        <svg
+          aria-hidden="true"
+          class="h-4 w-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="m6 9 6 6 6-6"></path>
+        </svg>
+      </button>
+    </div>
+    @if (isOpen) {
+      <div class="path-picker-panel" [id]="listId" role="listbox">
+        @for (option of options; track option.value) {
+          <button
+            type="button"
+            class="path-picker-option"
+            role="option"
+            [attr.aria-selected]="selected.value === option.value"
+            [class.path-picker-option-selected]="
+              selected.value === option.value
+            "
+            (mousedown)="select(option, $event)"
+          >
+            <span class="work-item-type-option-main">
+              <span
+                class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold"
+                [ngClass]="option.badgeClasses"
+                >{{ option.label }}</span
+              >
+              <span class="text-sm font-medium">{{ option.value }}</span>
+            </span>
+            <span class="path-picker-meta text-[14px] leading-4">{{
+              option.description
+            }}</span>
+          </button>
+        }
+      </div>
+    }
+  </div>
+  @if (loading) {
+    <span class="text-xs font-normal text-ink/70" role="status"
+      >Cargando tipos...</span
+    >
+  }
+  @if (error) {
+    <span class="text-xs font-normal text-ember" role="alert">{{ error }}</span>
+  }
+</div>

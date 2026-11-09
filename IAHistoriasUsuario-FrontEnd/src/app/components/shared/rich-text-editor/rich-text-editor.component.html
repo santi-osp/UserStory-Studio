@@ -1,0 +1,179 @@
+<div
+  class="rich-text-field"
+  [class.rich-text-field--invalid]="invalid"
+  [class.rich-text-field--disabled]="isDisabled"
+>
+  <label class="rich-text-field__label" [for]="inputId">
+    <span>{{ label }}</span>
+    @if (required && showRequiredIndicator) {
+      <span class="rich-text-field__required">* Requerido</span>
+    }
+  </label>
+
+  <div class="rich-text-editor">
+    <div
+      class="rich-text-editor__toolbar"
+      role="toolbar"
+      [attr.aria-label]="'Formato para ' + label"
+      [attr.aria-controls]="inputId"
+    >
+      <div
+        class="rich-text-editor__toolbar-group"
+        role="group"
+        aria-label="Formato de texto"
+      >
+        <button
+          type="button"
+          class="rich-text-editor__toolbar-button"
+          title="Negrita"
+          aria-label="Negrita"
+          [attr.aria-pressed]="activeBold"
+          [class.rich-text-editor__toolbar-button--active]="activeBold"
+          [disabled]="isDisabled"
+          (mousedown)="preserveEditorSelection($event)"
+          (click)="toggleInlineFormat('bold')"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M7 4h6.2a4 4 0 0 1 0 8H7V4Zm0 8h7a4 4 0 0 1 0 8H7v-8Z"
+            ></path>
+          </svg>
+        </button>
+        <button
+          type="button"
+          class="rich-text-editor__toolbar-button"
+          title="Cursiva"
+          aria-label="Cursiva"
+          [attr.aria-pressed]="activeItalic"
+          [class.rich-text-editor__toolbar-button--active]="activeItalic"
+          [disabled]="isDisabled"
+          (mousedown)="preserveEditorSelection($event)"
+          (click)="toggleInlineFormat('italic')"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M10 4h8M6 20h8M14 4 10 20"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div
+        class="rich-text-editor__toolbar-group"
+        role="group"
+        aria-label="Listas"
+      >
+        <button
+          type="button"
+          class="rich-text-editor__toolbar-button"
+          title="Lista con viñetas"
+          aria-label="Lista con viñetas"
+          [attr.aria-pressed]="activeBulletList"
+          [class.rich-text-editor__toolbar-button--active]="activeBulletList"
+          [disabled]="isDisabled"
+          (mousedown)="preserveEditorSelection($event)"
+          (click)="toggleList('bullet')"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="4.5" cy="7" r="1.25"></circle>
+            <circle cx="4.5" cy="12" r="1.25"></circle>
+            <circle cx="4.5" cy="17" r="1.25"></circle>
+            <path d="M9 7h11M9 12h11M9 17h11"></path>
+          </svg>
+        </button>
+        <button
+          type="button"
+          class="rich-text-editor__toolbar-button"
+          title="Lista numerada"
+          aria-label="Lista numerada"
+          [attr.aria-pressed]="activeOrderedList"
+          [class.rich-text-editor__toolbar-button--active]="activeOrderedList"
+          [disabled]="isDisabled"
+          (mousedown)="preserveEditorSelection($event)"
+          (click)="toggleList('ordered')"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M3 6h2v3M3 9h3M3 12h3l-3 4h3M9 7h11M9 12h11M9 17h11"
+            ></path>
+          </svg>
+        </button>
+      </div>
+
+      <div
+        class="rich-text-editor__toolbar-group"
+        role="group"
+        aria-label="Historial local"
+      >
+        <button
+          type="button"
+          class="rich-text-editor__toolbar-button"
+          title="Deshacer"
+          aria-label="Deshacer"
+          [disabled]="isDisabled || !canUndo"
+          (mousedown)="preserveEditorSelection($event)"
+          (click)="undo()"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m9 7-5 5 5 5M5 12h8a6 6 0 0 1 6 6"></path>
+          </svg>
+        </button>
+        <button
+          type="button"
+          class="rich-text-editor__toolbar-button"
+          title="Rehacer"
+          aria-label="Rehacer"
+          [disabled]="isDisabled || !canRedo"
+          (mousedown)="preserveEditorSelection($event)"
+          (click)="redo()"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m15 7 5 5-5 5M19 12h-8a6 6 0 0 0-6 6"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div
+        class="rich-text-editor__toolbar-group"
+        role="group"
+        aria-label="Limpiar"
+      >
+        <button
+          type="button"
+          class="rich-text-editor__toolbar-button"
+          title="Limpiar formato"
+          aria-label="Limpiar formato"
+          [disabled]="isDisabled"
+          (mousedown)="preserveEditorSelection($event)"
+          (click)="clearFormat()"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="m4 20 7-7M14 4l6 6-8.5 8.5a2.1 2.1 0 0 1-3 0l-3-3a2.1 2.1 0 0 1 0-3L14 4ZM3 20h8"
+            ></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <quill-editor
+      class="rich-text-editor__surface"
+      theme="snow"
+      [modules]="modules"
+      [formats]="formats"
+      [readOnly]="isDisabled"
+      [placeholder]="placeholder"
+      [trackChanges]="'user'"
+      [defaultEmptyValue]="''"
+      (onEditorCreated)="handleEditorCreated($event)"
+      (onContentChanged)="handleContentChanged($event)"
+      (onSelectionChanged)="handleSelectionChanged($event)"
+      (onBlur)="handleBlur($event)"
+    >
+    </quill-editor>
+  </div>
+
+  @if (invalid) {
+    <p class="rich-text-field__error" [id]="inputId + '-error'">
+      {{ errorMessage }}
+    </p>
+  }
+</div>

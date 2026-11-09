@@ -1,0 +1,96 @@
+<div class="path-picker">
+  <div class="path-picker-head">
+    <input
+      #searchInput
+      class="field-input pr-12"
+      [attr.id]="inputId || null"
+      [attr.title]="displayValue || null"
+      role="combobox"
+      aria-autocomplete="list"
+      autocomplete="off"
+      [attr.aria-required]="required ? 'true' : null"
+      [attr.aria-invalid]="invalid ? 'true' : null"
+      [attr.aria-describedby]="describedBy || null"
+      [attr.aria-controls]="isOpen ? dropdownId : null"
+      [attr.aria-expanded]="isOpen"
+      [value]="isOpen ? searchTerm : displayValue"
+      [placeholder]="placeholder"
+      [disabled]="disabled"
+      (focus)="onFocus()"
+      (input)="onInput($event)"
+      (keydown.escape)="onEscape($event)"
+    />
+    <button
+      type="button"
+      class="path-picker-toggle"
+      [disabled]="disabled"
+      [attr.aria-expanded]="isOpen"
+      aria-label="Mostrar opciones"
+      (click)="toggleOpen($event)"
+    >
+      <svg
+        aria-hidden="true"
+        class="h-4 w-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="m6 9 6 6 6-6"></path>
+      </svg>
+    </button>
+  </div>
+
+  @if (hint) {
+    <span class="path-picker-hint">{{ hint }}</span>
+  }
+
+  @if (isOpen) {
+    <div class="path-picker-panel" [attr.id]="dropdownId" role="listbox">
+      @if (loading) {
+        <p class="path-picker-empty">{{ loadingText }}</p>
+      } @else {
+        @if (errorText) {
+          <p class="path-picker-empty text-ember">{{ errorText }}</p>
+        }
+
+        @if (clearable && (displayValue || searchTerm)) {
+          <button
+            type="button"
+            class="path-picker-option"
+            (mousedown)="clearSelection($event)"
+            (keydown.enter)="clearSelection($event)"
+            (keydown.space)="clearSelection($event)"
+          >
+            <span class="path-picker-main">{{ clearLabel }}</span>
+          </button>
+        }
+
+        @if (filteredOptions.length === 0) {
+          <p class="path-picker-empty">{{ emptyText }}</p>
+        }
+
+        @for (option of filteredOptions; track option.value) {
+          <button
+            type="button"
+            class="path-picker-option"
+            [attr.title]="option.label"
+            role="option"
+            [attr.aria-selected]="isSelected(option)"
+            [class.path-picker-option-selected]="isSelected(option)"
+            (mousedown)="selectOption(option, $event)"
+            (keydown.enter)="selectOption(option, $event)"
+            (keydown.space)="selectOption(option, $event)"
+          >
+            <span class="path-picker-main">{{ option.label }}</span>
+            @if (option.meta) {
+              <span class="path-picker-sub">{{ option.meta }}</span>
+            }
+          </button>
+        }
+      }
+    </div>
+  }
+</div>

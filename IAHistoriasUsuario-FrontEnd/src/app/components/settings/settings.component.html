@@ -1,0 +1,165 @@
+<div class="page-shell">
+  <app-page-header
+    title="Configuración Azure DevOps"
+    subtitle="Configura tu organización y carga la información necesaria para trabajar con Azure DevOps."
+  >
+  </app-page-header>
+
+  <main class="content-wrap settings-flow">
+    <app-section-card
+      class="settings-information-card"
+      title="Información de Azure DevOps"
+      description="La información cargada se conserva únicamente durante esta pestaña o sesión del navegador."
+    >
+      <section
+        class="settings-information-state"
+        [class.settings-information-state-stale]="informationIsStale"
+        [class.settings-information-state-error]="refreshError"
+        [attr.aria-busy]="isLoading"
+        aria-live="polite"
+      >
+        <p [attr.role]="refreshError ? 'alert' : 'status'">
+          {{ informationMessage }}
+        </p>
+      </section>
+
+      <section
+        class="settings-information-summary"
+        aria-label="Información disponible de Azure DevOps"
+      >
+        <h3>Información disponible</h3>
+        <div class="settings-summary-grid">
+          <article class="summary-card">
+            <p class="summary-label">Proyectos</p>
+            <p class="summary-value">{{ metadata.projects.length }}</p>
+          </article>
+          <article class="summary-card">
+            <p class="summary-label">Áreas</p>
+            <p class="summary-value">{{ metadata.areaPaths.length }}</p>
+          </article>
+          <article class="summary-card">
+            <p class="summary-label">Iteraciones</p>
+            <p class="summary-value">{{ metadata.iterationPaths.length }}</p>
+          </article>
+        </div>
+      </section>
+
+      <form
+        #connectionForm
+        class="settings-form"
+        [formGroup]="form"
+        (ngSubmit)="loadInformation()"
+        novalidate
+      >
+        <div class="settings-form-grid">
+          <div class="field-label">
+            <label for="azure-organization">Organización Azure DevOps</label>
+            <input
+              id="azure-organization"
+              name="azureOrganization"
+              class="field-input"
+              type="text"
+              formControlName="organization"
+              autocomplete="organization"
+              autocapitalize="none"
+              spellcheck="false"
+              placeholder="Ej: MiOrganizacionDevOps"
+              [attr.aria-invalid]="isFieldInvalid('organization')"
+              [attr.aria-describedby]="
+                isFieldInvalid('organization')
+                  ? 'azure-organization-error'
+                  : 'azure-organization-help'
+              "
+            />
+            <span id="azure-organization-help" class="settings-field-help"
+              >Nombre de la organización.</span
+            >
+            @if (isFieldInvalid("organization")) {
+              <span id="azure-organization-error" class="field-error-message"
+                >Ingresa la organización de Azure DevOps.</span
+              >
+            }
+          </div>
+
+          <div class="field-label">
+            <label for="azure-pat">Azure PAT</label>
+            <span class="settings-pat-field">
+              <input
+                id="azure-pat"
+                name="azurePat"
+                class="field-input settings-pat-input"
+                [type]="showAzurePat ? 'text' : 'password'"
+                autocomplete="current-password"
+                autocapitalize="none"
+                spellcheck="false"
+                formControlName="azurePat"
+                aria-describedby="azure-pat-help azure-pat-error"
+                [attr.aria-invalid]="isFieldInvalid('azurePat')"
+                placeholder="Pega tu PAT"
+              />
+              <button
+                type="button"
+                class="settings-pat-toggle"
+                (click)="toggleAzurePatVisibility()"
+                [attr.aria-label]="
+                  showAzurePat ? 'Ocultar Azure PAT' : 'Mostrar Azure PAT'
+                "
+                [attr.aria-pressed]="showAzurePat"
+                [title]="
+                  showAzurePat ? 'Ocultar Azure PAT' : 'Mostrar Azure PAT'
+                "
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"
+                  ></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                  @if (!showAzurePat) {
+                    <path d="M3 3l18 18"></path>
+                  }
+                </svg>
+              </button>
+            </span>
+            <span id="azure-pat-help" class="settings-field-help"
+              >La credencial se usa solo en memoria y no se guarda en el navegador.</span
+            >
+            @if (isFieldInvalid("azurePat")) {
+              <span id="azure-pat-error" class="field-error-message">
+                {{
+                  form.controls["azurePat"].hasError("invalidCredential")
+                    ? "Verifica el Azure PAT e inténtalo nuevamente."
+                    : "Ingresa tu Azure PAT."
+                }}
+              </span>
+            } @else {
+              <span id="azure-pat-error" class="sr-only"></span>
+            }
+          </div>
+        </div>
+
+        <div class="action-bar settings-primary-action">
+          <button
+            type="submit"
+            class="btn-primary"
+            [disabled]="isLoading"
+            [attr.aria-busy]="isLoading"
+          >
+            @if (isLoading) {
+              <app-loading-spinner size="small"></app-loading-spinner>
+            }
+            {{ submitLabel }}
+          </button>
+        </div>
+      </form>
+    </app-section-card>
+  </main>
+</div>

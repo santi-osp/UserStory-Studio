@@ -1,0 +1,214 @@
+<article class="preview-test-case" [formGroup]="form">
+  <div class="preview-test-case-heading">
+    <div class="preview-test-case-title">
+      <span class="preview-test-case-index">{{ position + 1 }}</span>
+      <div class="preview-test-case-title-field">
+        <label [for]="'test-case-title-' + position">
+          Título
+          @if (showRequiredIndicators) {
+            <app-required-field-marker></app-required-field-marker>
+          }
+        </label>
+        <input
+          [id]="'test-case-title-' + position"
+          class="field-input"
+          formControlName="title"
+          required
+          [attr.aria-required]="true"
+          [attr.aria-invalid]="isInvalid(form.controls.title)"
+          [attr.aria-describedby]="
+            isInvalid(form.controls.title)
+              ? 'test-case-title-' + position + '-error'
+              : null
+          "
+          [class.preview-field-error]="isInvalid(form.controls.title)"
+        />
+        @if (isInvalid(form.controls.title)) {
+          <p
+            [id]="'test-case-title-' + position + '-error'"
+            class="field-error-message"
+          >
+            El título es obligatorio.
+          </p>
+        }
+      </div>
+    </div>
+
+    <div class="preview-test-case-controls">
+      <div class="preview-test-case-state-field">
+        <label [for]="'test-case-state-' + position">
+          Estado
+          @if (showRequiredIndicators) {
+            <app-required-field-marker></app-required-field-marker>
+          }
+        </label>
+        <select
+          [id]="'test-case-state-' + position"
+          class="field-input"
+          formControlName="state"
+          required
+          [attr.aria-required]="true"
+          [attr.aria-invalid]="isInvalid(form.controls.state)"
+          [attr.aria-describedby]="
+            isInvalid(form.controls.state)
+              ? 'test-case-state-' + position + '-error'
+              : null
+          "
+          [class.preview-field-error]="isInvalid(form.controls.state)"
+        >
+          <option value="" disabled>Selecciona un estado</option>
+          @for (state of allowedStates; track state) {
+            <option [value]="state">{{ state }}</option>
+          }
+        </select>
+        @if (isInvalid(form.controls.state)) {
+          <p
+            [id]="'test-case-state-' + position + '-error'"
+            class="field-error-message"
+          >
+            {{
+              form.controls.state.hasError("invalidState")
+                ? "Selecciona un estado válido de Azure DevOps."
+                : "El estado es obligatorio."
+            }}
+          </p>
+        }
+      </div>
+      <span class="preview-step-count">
+        {{ steps.length }} {{ steps.length === 1 ? "paso" : "pasos" }}
+      </span>
+      <button
+        type="button"
+        class="preview-delete-button"
+        [attr.aria-label]="'Eliminar Test Case ' + (position + 1)"
+        (click)="requestDelete()"
+        [disabled]="disabled"
+      >
+        Eliminar
+      </button>
+    </div>
+  </div>
+
+  <div class="preview-test-case-detail" formArrayName="steps">
+    @for (stepForm of steps.controls; track stepForm; let stepIndex = $index) {
+      <fieldset class="preview-test-case-step" [formGroupName]="stepIndex">
+        <legend>Paso {{ stepIndex + 1 }}</legend>
+        <div class="preview-test-case-step-fields">
+          <label
+            [for]="'test-case-' + position + '-step-' + stepIndex + '-action'"
+          >
+            Acción
+            @if (showRequiredIndicators) {
+              <app-required-field-marker></app-required-field-marker>
+            }
+            <textarea
+              [id]="'test-case-' + position + '-step-' + stepIndex + '-action'"
+              class="field-input"
+              formControlName="action"
+              required
+              [attr.aria-required]="true"
+              [attr.aria-invalid]="isInvalid(stepForm.controls.action)"
+              [attr.aria-describedby]="
+                isInvalid(stepForm.controls.action)
+                  ? 'test-case-' +
+                    position +
+                    '-step-' +
+                    stepIndex +
+                    '-action-error'
+                  : null
+              "
+              [class.preview-field-error]="isInvalid(stepForm.controls.action)"
+            ></textarea>
+            @if (isInvalid(stepForm.controls.action)) {
+              <span
+                [id]="
+                  'test-case-' +
+                  position +
+                  '-step-' +
+                  stepIndex +
+                  '-action-error'
+                "
+                class="field-error-message"
+                >La acción es obligatoria.</span
+              >
+            }
+          </label>
+          <label
+            [for]="'test-case-' + position + '-step-' + stepIndex + '-expected'"
+          >
+            Resultado esperado
+            @if (showRequiredIndicators) {
+              <app-required-field-marker></app-required-field-marker>
+            }
+            <textarea
+              [id]="
+                'test-case-' + position + '-step-' + stepIndex + '-expected'
+              "
+              class="field-input"
+              formControlName="expected"
+              required
+              [attr.aria-required]="true"
+              [attr.aria-invalid]="isInvalid(stepForm.controls.expected)"
+              [attr.aria-describedby]="
+                isInvalid(stepForm.controls.expected)
+                  ? 'test-case-' +
+                    position +
+                    '-step-' +
+                    stepIndex +
+                    '-expected-error'
+                  : null
+              "
+              [class.preview-field-error]="
+                isInvalid(stepForm.controls.expected)
+              "
+            ></textarea>
+            @if (isInvalid(stepForm.controls.expected)) {
+              <span
+                [id]="
+                  'test-case-' +
+                  position +
+                  '-step-' +
+                  stepIndex +
+                  '-expected-error'
+                "
+                class="field-error-message"
+                >El resultado esperado es obligatorio.</span
+              >
+            }
+          </label>
+        </div>
+        <button
+          type="button"
+          class="preview-delete-button"
+          [attr.aria-label]="
+            'Eliminar paso ' +
+            (stepIndex + 1) +
+            ' del Test Case ' +
+            (position + 1)
+          "
+          (click)="removeStep(stepIndex)"
+          [disabled]="disabled || steps.length <= 1"
+        >
+          Eliminar paso
+        </button>
+      </fieldset>
+    }
+
+    @if (steps.invalid && (showValidation || steps.dirty || steps.touched)) {
+      <p class="field-error-message">
+        Cada Test Case debe conservar al menos un paso.
+      </p>
+    }
+
+    <div class="preview-add-step-action">
+      <button
+        type="button"
+        class="btn-secondary preview-add-step-button"
+        (click)="addStep()"
+        [disabled]="disabled"
+      >
+        <span aria-hidden="true">+</span> Agregar paso
+      </button>
+    </div>
+  </div>
+</article>

@@ -1,0 +1,402 @@
+<div
+  class="preview-modal-backdrop refinement-backdrop"
+  role="presentation"
+  (mousedown)="cancelFromBackdrop($event)"
+>
+  <section
+    #dialog
+    class="refinement-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="refinement-dialog-title"
+    aria-describedby="refinement-dialog-description"
+    tabindex="-1"
+  >
+    <form
+      class="refinement-dialog-form"
+      [formGroup]="form"
+      (ngSubmit)="submit()"
+    >
+      <header class="refinement-header">
+        <span class="refinement-icon" aria-hidden="true">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+          >
+            <path
+              d="M12 3l1.1 3.2L16 7.5l-2.9 1.3L12 12l-1.1-3.2L8 7.5l2.9-1.3L12 3Z"
+            ></path>
+            <path
+              d="M18.5 13l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2Z"
+            ></path>
+          </svg>
+        </span>
+        <div class="refinement-heading-copy">
+          <h2 id="refinement-dialog-title">Refinar Work Item</h2>
+          <p id="refinement-dialog-description">
+            Elige qué quieres mejorar. Nada cambiará hasta que aceptes la
+            propuesta.
+          </p>
+        </div>
+        @if (loading) {
+          <span
+            class="refinement-loading-label"
+            role="status"
+            aria-live="polite"
+          >
+            <span class="refinement-spinner" aria-hidden="true"></span>
+            Generando propuesta
+          </span>
+        }
+        <button
+          type="button"
+          class="refinement-close"
+          aria-label="Cerrar refinamiento"
+          (click)="cancel()"
+          [disabled]="loading"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path d="M6 6l12 12M18 6L6 18"></path>
+          </svg>
+        </button>
+      </header>
+
+      <div class="refinement-body">
+        <div
+          class="refinement-tabs"
+          role="tablist"
+          aria-label="Alcance del refinamiento"
+        >
+          <button
+            #initialFocus
+            type="button"
+            role="tab"
+            class="refinement-tab"
+            [class.refinement-tab-active]="scope === 'content'"
+            [attr.aria-selected]="scope === 'content'"
+            (click)="selectScope('content')"
+          >
+            Contenido
+          </button>
+          @if (testCases.length > 0) {
+            <button
+              type="button"
+              role="tab"
+              class="refinement-tab"
+              [class.refinement-tab-active]="scope === 'testCases'"
+              [attr.aria-selected]="scope === 'testCases'"
+              (click)="selectScope('testCases')"
+            >
+              Test Cases <span>{{ testCases.length }}</span>
+            </button>
+          }
+        </div>
+
+        @if (preparing) {
+          <div class="refinement-notice" aria-live="polite" aria-busy="true">
+            <span class="refinement-spinner" aria-hidden="true"></span>
+            <div>
+              <strong>Preparando el refinamiento</strong>
+              <p>Estamos comprobando los campos disponibles.</p>
+            </div>
+          </div>
+        }
+        @if (preparationError) {
+          <div class="refinement-notice refinement-notice-error" role="alert">
+            <div>
+              <strong>No fue posible comprobar todos los campos</strong>
+              <p>{{ preparationError }}</p>
+            </div>
+            <div class="refinement-inline-actions">
+              <button type="button" class="btn-secondary" (click)="retry()">
+                Reintentar
+              </button>
+              @if (fallbackAvailable) {
+                <button
+                  type="button"
+                  class="btn-primary"
+                  (click)="continueWithFallback()"
+                >
+                  Continuar
+                </button>
+              }
+            </div>
+          </div>
+        }
+        @if (usingFallback && !preparing && !preparationError) {
+          <div class="refinement-notice" role="status">
+            Usaremos los campos que esta vista puede conservar de forma segura.
+          </div>
+        }
+
+        @if (!preparing && !preparationError && scope === "content") {
+          <div class="refinement-workspace" role="tabpanel">
+            <section class="refinement-section">
+              <div class="refinement-section-heading">
+                <div>
+                  <h3>
+                    Campos a mejorar
+                    <app-required-field-marker></app-required-field-marker>
+                  </h3>
+                  <p>Selecciona uno o varios campos de contenido.</p>
+                </div>
+              </div>
+              <div
+                class="refinement-field-grid"
+                role="group"
+                aria-label="Campos a mejorar"
+              >
+                @for (field of availableFields; track field) {
+                  <label class="refinement-choice-card">
+                    <input type="checkbox" [formControlName]="field" />
+                    <span
+                      ><strong>{{ fieldLabels[field] }}</strong
+                      ><small
+                        >Conservará el contexto y alcance actuales.</small
+                      ></span
+                    >
+                  </label>
+                }
+              </div>
+            </section>
+            <section class="refinement-section">
+              <h3>Sugerencias rápidas</h3>
+              <div class="refinement-suggestions">
+                @for (suggestion of contentSuggestions; track suggestion) {
+                  <button type="button" (click)="addSuggestion(suggestion)">
+                    {{ suggestion }}
+                  </button>
+                }
+              </div>
+            </section>
+            <label
+              class="refinement-section refinement-instructions"
+              for="content-refinement-instructions"
+            >
+              <span class="refinement-label-row"
+                ><strong
+                  >Indicaciones para el refinamiento
+                  <app-required-field-marker></app-required-field-marker
+                ></strong>
+                <span
+                  >{{ form.controls.contentInstructions.value.length }} /
+                  {{ maxInstructionsLength }}</span
+                ></span
+              >
+              <textarea
+                id="content-refinement-instructions"
+                class="field-input"
+                formControlName="contentInstructions"
+                [maxLength]="maxInstructionsLength"
+                required
+                aria-required="true"
+                placeholder="Describe cómo quieres mejorar el contenido."
+              ></textarea>
+              @if (
+                form.controls.contentInstructions.touched &&
+                form.controls.contentInstructions.invalid
+              ) {
+                <span class="field-error-message"
+                  >Escribe una indicación de hasta 2.000 caracteres.</span
+                >
+              }
+            </label>
+          </div>
+        }
+
+        @if (!preparing && !preparationError && scope === "testCases") {
+          <div class="refinement-workspace" role="tabpanel">
+            <section class="refinement-section refinement-case-tools">
+              <div class="refinement-section-heading">
+                <div>
+                  <h3>
+                    Test Cases a refinar
+                    <app-required-field-marker></app-required-field-marker>
+                  </h3>
+                  <p>
+                    Selecciona casos específicos. La búsqueda no cambia tu
+                    selección.
+                  </p>
+                </div>
+                <strong class="refinement-selection-count" aria-live="polite"
+                  >{{ selectedTestCaseCount }} seleccionados</strong
+                >
+              </div>
+              <div class="refinement-search-row">
+                <label
+                  ><span class="sr-only">Buscar Test Cases</span>
+                  <input
+                    type="search"
+                    class="field-input"
+                    formControlName="search"
+                    placeholder="Buscar por título o número"
+                /></label>
+                <button
+                  type="button"
+                  class="btn-muted"
+                  (click)="selectAllFiltered()"
+                >
+                  Seleccionar visibles
+                </button>
+                <button
+                  type="button"
+                  class="btn-muted"
+                  (click)="clearSelection()"
+                >
+                  Limpiar
+                </button>
+              </div>
+              <div
+                class="refinement-case-list"
+                aria-label="Test Cases disponibles"
+              >
+                @for (item of filteredTestCases; track item.ref) {
+                  <label
+                    class="refinement-case-card"
+                    [class.refinement-case-selected]="isSelected(item.ref)"
+                  >
+                    <input
+                      type="checkbox"
+                      [checked]="isSelected(item.ref)"
+                      (change)="toggleTestCase(item.ref)"
+                    />
+                    <span class="refinement-case-main"
+                      ><strong
+                        >TC {{ item.position + 1 }} ·
+                        {{ item.testCase.title || "Sin título" }}</strong
+                      >
+                      <small
+                        >{{ item.testCase.state || "Sin estado" }} ·
+                        {{ item.testCase.steps.length }}
+                        {{
+                          item.testCase.steps.length === 1 ? "paso" : "pasos"
+                        }}</small
+                      ></span
+                    >
+                    <span class="refinement-check-indicator" aria-hidden="true"
+                      >✓</span
+                    >
+                  </label>
+                } @empty {
+                  <div class="refinement-empty">
+                    No encontramos Test Cases con esa búsqueda.
+                  </div>
+                }
+              </div>
+            </section>
+            <section class="refinement-section">
+              <h3>Cómo crear la propuesta</h3>
+              <div
+                class="refinement-mode-grid"
+                role="radiogroup"
+                aria-label="Modo de refinamiento"
+              >
+                <label class="refinement-choice-card"
+                  ><input
+                    type="radio"
+                    formControlName="testCaseMode"
+                    value="improve"
+                  />
+                  <span
+                    ><strong>Mejorar</strong
+                    ><small
+                      >Conserva el escenario y aclara títulos, pasos y
+                      resultados.</small
+                    ></span
+                  ></label
+                >
+                <label class="refinement-choice-card"
+                  ><input
+                    type="radio"
+                    formControlName="testCaseMode"
+                    value="regenerate"
+                  />
+                  <span
+                    ><strong>Regenerar</strong
+                    ><small
+                      >Reemplaza el contenido manteniendo posición y
+                      estado.</small
+                    ></span
+                  ></label
+                >
+              </div>
+            </section>
+            <section class="refinement-section">
+              <h3>Sugerencias rápidas</h3>
+              <div class="refinement-suggestions">
+                @for (suggestion of testCaseSuggestions; track suggestion) {
+                  <button type="button" (click)="addSuggestion(suggestion)">
+                    {{ suggestion }}
+                  </button>
+                }
+              </div>
+            </section>
+            <label
+              class="refinement-section refinement-instructions"
+              for="test-case-refinement-instructions"
+            >
+              <span class="refinement-label-row"
+                ><strong
+                  >Indicaciones para el refinamiento
+                  <app-required-field-marker></app-required-field-marker
+                ></strong>
+                <span
+                  >{{ form.controls.testCaseInstructions.value.length }} /
+                  {{ maxInstructionsLength }}</span
+                ></span
+              >
+              <textarea
+                id="test-case-refinement-instructions"
+                class="field-input"
+                formControlName="testCaseInstructions"
+                [maxLength]="maxInstructionsLength"
+                required
+                aria-required="true"
+                placeholder="Explica qué debe mejorar o cambiar en los casos seleccionados."
+              ></textarea>
+              @if (
+                form.controls.testCaseInstructions.touched &&
+                form.controls.testCaseInstructions.invalid
+              ) {
+                <span class="field-error-message"
+                  >Escribe una indicación de hasta 2.000 caracteres.</span
+                >
+              }
+            </label>
+          </div>
+        }
+        @if (error) {
+          <p class="refinement-request-error" role="alert">{{ error }}</p>
+        }
+      </div>
+
+      <footer class="refinement-footer">
+        <p aria-live="polite">{{ contextualSummary }}</p>
+        <div>
+          <button
+            type="button"
+            class="btn-muted"
+            (click)="cancel()"
+            [disabled]="loading"
+          >
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primary" [disabled]="!canSubmit">
+            @if (loading) {
+              <span class="refinement-spinner" aria-hidden="true"></span>
+            }
+            {{ loading ? "Generando propuesta..." : "Generar propuesta" }}
+          </button>
+        </div>
+      </footer>
+    </form>
+  </section>
+</div>

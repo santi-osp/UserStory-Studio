@@ -1,0 +1,174 @@
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+}
+.creation-dialog-backdrop {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.62);
+}
+.creation-dialog {
+  display: flex;
+  width: min(46rem, 100%);
+  max-height: min(50rem, calc(100dvh - 2rem));
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--brand-ink) 14%, transparent);
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 24px 70px -28px rgba(15, 23, 42, 0.8);
+}
+.creation-dialog-header,
+.creation-dialog-footer {
+  flex: 0 0 auto;
+  padding: 1rem 1.25rem;
+  background: #fff;
+}
+.creation-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--brand-ink) 12%, transparent);
+}
+.creation-dialog-header h2 {
+  margin: 0.15rem 0 0;
+  color: var(--brand-ink);
+  font-size: var(--type-modal-title);
+  font-weight: 800;
+}
+.creation-dialog-eyebrow {
+  margin: 0;
+  color: var(--brand-primary);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.creation-dialog-close {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.65rem;
+  color: var(--brand-ink);
+  font-size: 1.5rem;
+}
+.creation-dialog-body {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+.creation-dialog-body section + section {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid color-mix(in srgb, var(--brand-ink) 10%, transparent);
+}
+.creation-dialog-body h3 {
+  margin: 0 0 0.65rem;
+  color: var(--brand-ink);
+  font-size: var(--type-control);
+  font-weight: 800;
+}
+.creation-dialog-status {
+  display: flex;
+  min-height: 2rem;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--brand-ink);
+  font-weight: 700;
+}
+.creation-dialog-status p {
+  margin: 0;
+}
+.creation-dialog-spinner {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: 0 0 auto;
+  border: 2px solid color-mix(in srgb, var(--brand-primary) 22%, transparent);
+  border-top-color: var(--brand-primary);
+  border-radius: 999px;
+  animation: creation-dialog-spin 0.8s linear infinite;
+}
+.creation-dialog-alert,
+.creation-dialog-warnings {
+  margin-top: 1rem;
+  border-radius: 0.75rem;
+  padding: 0.8rem;
+}
+.creation-dialog-alert {
+  display: grid;
+  gap: 0.2rem;
+  border: 1px solid color-mix(in srgb, var(--brand-danger) 32%, transparent);
+  background: color-mix(in srgb, var(--brand-danger) 7%, #fff);
+  color: var(--brand-danger);
+}
+.creation-dialog-issues,
+.creation-dialog-warnings {
+  padding-left: 1.75rem;
+}
+.creation-dialog-warnings {
+  border: 1px solid color-mix(in srgb, #a16207 28%, transparent);
+  background: #fffbeb;
+  color: #854d0e;
+}
+.creation-dialog-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1.25rem;
+}
+.creation-dialog-grid div {
+  min-width: 0;
+}
+.creation-dialog-grid dt {
+  color: color-mix(in srgb, var(--brand-ink) 62%, transparent);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.creation-dialog-grid dd {
+  margin: 0.2rem 0 0;
+  overflow-wrap: anywhere;
+  color: var(--brand-ink);
+}
+.creation-dialog-result p {
+  margin: 0.35rem 0 0;
+}
+.creation-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  border-top: 1px solid color-mix(in srgb, var(--brand-ink) 12%, transparent);
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+@keyframes creation-dialog-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (max-width: 479px) {
+  .creation-dialog-backdrop {
+    align-items: end;
+    padding: 0;
+  }
+  .creation-dialog {
+    width: 100%;
+    max-height: 100dvh;
+    border-radius: 0.9rem 0.9rem 0 0;
+  }
+  .creation-dialog-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .creation-dialog-footer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .creation-dialog-footer button {
+    width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .creation-dialog-spinner {
+    animation-duration: 1.6s;
+  }
+}
